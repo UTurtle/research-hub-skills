@@ -1,16 +1,10 @@
 # Research Hub Skill Map
 
-This document fixes the intended relationship between Superpowers process
-skills, Codex/plugin skills, and the `research-hub-skills` package.
-
-Process trail:
-
-- Design: `docs/superpowers/specs/2026-04-30-research-hub-skill-map-design.md`
-- Plan: `docs/superpowers/plans/2026-04-30-research-hub-skill-map.md`
+This document fixes the intended relationship between the Research Hub skills,
+the `research_hub` package, generated context, and optional profiles.
 
 The short version:
 
-- Superpowers skills define how Codex should work.
 - Research Hub skills define how Codex should read, index, and publish research
   workspace context.
 - Optional profiles, such as `dcase2026`, add domain-specific interpretation
@@ -20,18 +14,8 @@ The short version:
 
 ```mermaid
 flowchart TD
-    A["Codex session"] --> B["Skill check"]
-
-    B --> SP["Superpowers process skills"]
-    B --> RH["research-hub-skills"]
-    B --> PLUG["Other Codex/plugin skills"]
-
-    SP --> SP1["using-superpowers<br/>check relevant skills first"]
-    SP --> SP2["brainstorming<br/>shape unclear feature work"]
-    SP --> SP3["writing-plans<br/>turn approved design into tasks"]
-    SP --> SP4["test-driven-development<br/>test behavior before code"]
-    SP --> SP5["verification-before-completion<br/>fresh evidence before claims"]
-    SP --> SP6["github / yeet<br/>commit, push, PR workflow"]
+    A["Research workspace"] --> RAW["Original files<br/>md / txt / csv / json / yaml / logs / py / sh"]
+    RAW --> RH["research-hub-skills"]
 
     RH --> RHC["research-hub-context<br/>read generated context first"]
     RH --> RWI["research-workspace-index<br/>build workspace index"]
@@ -39,11 +23,6 @@ flowchart TD
     RH --> RLI["research-literature-index<br/>index related work evidence"]
     RH --> RDS["research-discussion-synthesis<br/>synthesize discussions"]
     RH --> RDP["research-documentation-patch<br/>patch docs with evidence"]
-
-    PLUG --> GH["GitHub"]
-    PLUG --> DOC["Docs / PDF / spreadsheets"]
-    PLUG --> WEB["Browser / web app tools"]
-    PLUG --> HF["Hugging Face"]
 
     RWI --> CORE["research_hub core"]
     RWP --> CORE
@@ -74,7 +53,9 @@ flowchart TD
 
     GOUT --> CTX
     DOUT --> CTX
-    CTX --> AGENT["Codex / research agent startup surface"]
+    CTX --> AGENT["Codex / research agent<br/>startup reading surface"]
+    O4 --> PANEL["Human-readable panel"]
+    O5 --> BRANCHCTX["Branch-specific agent packs"]
 ```
 
 ## Publish Flow
@@ -82,33 +63,30 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant User
-    participant Codex
-    participant Superpowers
+    participant Agent as Codex / research agent
     participant Skill as Research Hub Skill
     participant CLI as research-hub CLI
     participant Core as research_hub core
     participant Profile as optional profile
     participant Hub as Hub / _research_context
 
-    User->>Codex: Ask to index, publish, or reason over a research workspace
-    Codex->>Superpowers: Invoke relevant process skill first
-    Superpowers-->>Codex: Workflow guardrails and verification expectations
-    Codex->>Skill: Invoke relevant research-hub skill
+    User->>Agent: Ask to index, publish, or reason over a research workspace
+    Agent->>Skill: Invoke relevant research-hub skill
     Skill->>CLI: research-hub publish --profile generic or dcase2026
     CLI->>Core: Scan text-like workspace files
     Core->>Profile: Enrich records when a non-generic profile is selected
     Profile-->>Core: Domain hints, claims, runs, metrics, statuses
     Core->>Hub: Write JSONL, SQLite, manifest, context projection
     CLI->>Hub: Build panel and agent context packs
-    Codex->>Hub: Read generated context before raw folders
-    Codex-->>User: Evidence-linked summary, next action, or patch
+    Agent->>Hub: Read generated context before raw folders
+    Agent-->>User: Evidence-linked summary, next action, or patch
 ```
 
 ## Responsibilities
 
 | Layer | Responsibility | Should not do |
 | --- | --- | --- |
-| Superpowers | Control the work process: brainstorm, plan, test, verify, publish. | Encode DCASE research semantics. |
+| Research Hub skills | Tell agents how to read, index, publish, synthesize, and patch research context. | Replace source evidence with generated summaries. |
 | Research Hub core | Index files, chunk text, build SQLite search, publish generated context. | Make domain-specific claims by default. |
 | Generic profile | Preserve the domain-neutral default behavior. | Add branch, run, or claim assumptions. |
 | `dcase2026` profile | Infer DCASE branches, runs, document roles, metrics, claim hints, and status hints. | Replace source files as the authority. |

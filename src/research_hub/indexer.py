@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import os
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 DEFAULT_INCLUDE_EXTENSIONS = {
     ".md", ".txt", ".csv", ".json", ".jsonl", ".yaml", ".yml",
-    ".log", ".py", ".sh",
+    ".log", ".py", ".sh", ".toml", ".ini", ".cfg",
 }
 DEFAULT_EXCLUDE_DIRS = {
     ".git", ".venv", "venv", "__pycache__", "wandb", "node_modules",
@@ -33,6 +35,7 @@ class IndexConfig:
     include_extensions: set[str]
     exclude_dirs: set[str]
     exclude_extensions: set[str]
+    profile: str = "generic"
 
 
 def load_text(path: Path) -> str:
@@ -89,6 +92,8 @@ def build_index(config: IndexConfig) -> None:
     chunks_path = config.out_dir / "document_chunks.jsonl"
     docs_path = config.out_dir / "documents.jsonl"
     sqlite_path = config.out_dir / "search_index.sqlite"
+    profile = load_profile(config.profile)
+    document_records: list[dict[str, Any]] = []
     with docs_path.open("w", encoding="utf-8") as docs_file, (
         chunks_path.open("w", encoding="utf-8")
     ) as chunks_file:
@@ -97,14 +102,22 @@ def build_index(config: IndexConfig) -> None:
             text = load_text(path)
             stat = path.stat()
             file_hash = sha1_file(path)
-            docs_file.write(json.dumps({
+            record: dict[str, Any] = {
                 "workspace_id": config.workspace_id,
                 "host_id": config.host_id,
                 "source_path": rel_path,
                 "mtime": stat.st_mtime,
                 "size": stat.st_size,
                 "sha1": file_hash,
-            }, ensure_ascii=False) + "\n")
+            }
+            if profile:
+                record.update(
+                    profile.enrich_document(
+                        path, config.workspace_root, rel_path, text, stat
+                    )
+                )
+            document_records.append(record)
+            docs_file.write(json.dumps(record, ensure_ascii=False) + "\n")
             for idx, chunk in enumerate(split_chunks(text)):
                 chunks_file.write(json.dumps({
                     "workspace_id": config.workspace_id,
@@ -116,6 +129,8 @@ def build_index(config: IndexConfig) -> None:
                     "sha1": file_hash,
                 }, ensure_ascii=False) + "\n")
     build_sqlite_index(chunks_path, sqlite_path)
+    if profile:
+        write_profile_outputs(config, profile, document_records)
 
 
 def build_sqlite_index(chunks_path: Path, sqlite_path: Path) -> None:
@@ -138,3 +153,40 @@ def build_sqlite_index(chunks_path: Path, sqlite_path: Path) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+def load_profile(profile: str) -> Any | None:
+    if profile == "generic":
+        return None
+    return importlib.import_module(f"research_hub.profiles.{profile}")
+
+
+def write_profile_outputs(
+    config: IndexConfig,
+    profile: Any,
+    document_records: list[dict[str, Any]],
+) -> None:
+    runs = profile.build_runs(document_records)
+    claims = profile.build_claims(document_records)
+    write_jsonl(config.out_dir / "runs.jsonl", runs)
+    write_jsonl(config.out_dir / "claims.jsonl", claims)
+    manifest = {
+        "type": "workspace_index_manifest",
+        "workspace_id": config.workspace_id,
+        "host_id": config.host_id,
+        "profile": config.profile,
+        "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "documents": len(document_records),
+        "runs": len(runs),
+        "claims": len(claims),
+    }
+    (config.out_dir / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def write_jsonl(path: Path, records: Iterable[dict[str, Any]]) -> None:
+    with path.open("w", encoding="utf-8") as file_obj:
+        for record in records:
+            file_obj.write(json.dumps(record, ensure_ascii=False) + "\n")

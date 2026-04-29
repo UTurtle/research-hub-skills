@@ -1,3 +1,8 @@
+---
+name: research-discussion-synthesis
+description: Use when synthesizing discussion notes into evidence-linked research state, claim boundaries, or next actions.
+---
+
 # research-discussion-synthesis
 
 Purpose: support a domain-neutral, index-first research workspace hub.

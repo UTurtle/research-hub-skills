@@ -1,3 +1,8 @@
+---
+name: research-documentation-patch
+description: Use when patching research documentation while preserving source evidence, uncertainty, and claim boundaries.
+---
+
 # research-documentation-patch
 
 Purpose: support a domain-neutral, index-first research workspace hub.

@@ -41,7 +41,14 @@ def write_default_context(context_dir: Path) -> None:
 
 def copy_index_to_context(index_dir: Path, context_dir: Path) -> None:
     context_dir.mkdir(parents=True, exist_ok=True)
-    for filename in ("document_chunks.jsonl", "search_index.sqlite"):
+    for filename in (
+        "document_chunks.jsonl",
+        "documents.jsonl",
+        "runs.jsonl",
+        "claims.jsonl",
+        "manifest.json",
+        "search_index.sqlite",
+    ):
         src = index_dir / filename
         if src.exists():
             shutil.copy2(src, context_dir / filename)

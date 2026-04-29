@@ -32,6 +32,31 @@ python -m research_hub.cli pull-context --workspace-root .
 python -m research_hub.cli open --workspace-root .
 ```
 
+## Optional DCASE2026 profile
+
+The default profile stays domain-neutral. For DCASE2026-style workspaces, add
+`--profile dcase2026` to enrich the index with inferred branches, runs,
+document roles, metrics, claim hints, and status hints.
+
+```bash
+python -m research_hub.cli publish --workspace-root . \
+  --profile dcase2026
+python -m research_hub.cli pull-context --workspace-root . \
+  --profile dcase2026
+```
+
+Profile outputs include:
+
+- `runs.jsonl`
+- `claims.jsonl`
+- `manifest.json`
+- `panel/index.html`
+- `panel/agent_context/<branch>.json`
+
+The generated records are navigation aids only. Source workspace files remain
+authoritative, and uncertain claims should stay marked as `unknown` or
+`needs_review`.
+
 ## Git state hub mode
 
 Use a separate private state repository as the hub.
@@ -55,7 +80,7 @@ research-hub pull-context --hub .research_hub_state
 ## Default indexed files
 
 Included: `.md`, `.txt`, `.csv`, `.json`, `.jsonl`, `.yaml`, `.yml`,
-`.log`, `.py`, `.sh`.
+`.log`, `.py`, `.sh`, `.toml`, `.ini`, `.cfg`.
 
 Excluded: audio files, checkpoints, NumPy arrays, virtual environments,
 `.git`, `wandb`, caches, and `node_modules`.

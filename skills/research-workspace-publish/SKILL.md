@@ -1,3 +1,8 @@
+---
+name: research-workspace-publish
+description: Use when publishing a local research workspace index to a local, shared, or Git-backed research hub.
+---
+
 # research-workspace-publish
 
 Purpose: support a domain-neutral, index-first research workspace hub.

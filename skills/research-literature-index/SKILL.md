@@ -1,3 +1,8 @@
+---
+name: research-literature-index
+description: Use when indexing or summarizing papers, notes, and related-work evidence into a research hub without making unsupported claims.
+---
+
 # research-literature-index
 
 Purpose: support a domain-neutral, index-first research workspace hub.

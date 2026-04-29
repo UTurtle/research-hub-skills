@@ -7,8 +7,9 @@ The short version:
 
 - Research Hub skills define how Codex should read, index, and publish research
   workspace context.
-- Optional profiles, such as `dcase2026`, add domain-specific interpretation
-  without turning the core package into a domain-specific tool.
+- Optional profiles add domain-specific interpretation without turning the core
+  package into a domain-specific tool.
+- `dcase2026` is an appendix example of that profile mechanism.
 
 ## Skill Ecosystem
 
@@ -29,15 +30,15 @@ flowchart TD
     RHC --> CTX["_research_context/"]
 
     CORE --> GENERIC["generic profile<br/>default, domain-neutral"]
-    CORE --> DCASE["dcase2026 profile<br/>optional DCASE enrichment"]
+    CORE --> PROFILE["optional domain profile<br/>pluggable enrichment"]
 
     GENERIC --> GOUT["documents.jsonl<br/>document_chunks.jsonl<br/>search_index.sqlite"]
 
-    DCASE --> D1["branch inference<br/>main6 / main22 / main23 / main24"]
-    DCASE --> D2["run inference"]
-    DCASE --> D3["claim classification<br/>deployable / diagnostic / oracle / negative"]
-    DCASE --> D4["metric extraction"]
-    DCASE --> D5["status hints"]
+    PROFILE --> D1["domain entity inference<br/>runs / papers / trials / cases"]
+    PROFILE --> D2["domain role inference"]
+    PROFILE --> D3["claim classification"]
+    PROFILE --> D4["metric / outcome extraction"]
+    PROFILE --> D5["status hints"]
 
     D1 --> DOUT["DCASE enriched outputs"]
     D2 --> DOUT
@@ -45,7 +46,7 @@ flowchart TD
     D4 --> DOUT
     D5 --> DOUT
 
-    DOUT --> O1["runs.jsonl"]
+    DOUT --> O1["domain records<br/>runs.jsonl / papers.jsonl / trials.jsonl"]
     DOUT --> O2["claims.jsonl"]
     DOUT --> O3["manifest.json"]
     DOUT --> O4["panel/index.html"]
@@ -67,12 +68,12 @@ sequenceDiagram
     participant Skill as Research Hub Skill
     participant CLI as research-hub CLI
     participant Core as research_hub core
-    participant Profile as optional profile
+    participant Profile as optional domain profile
     participant Hub as Hub / _research_context
 
     User->>Agent: Ask to index, publish, or reason over a research workspace
     Agent->>Skill: Invoke relevant research-hub skill
-    Skill->>CLI: research-hub publish --profile generic or dcase2026
+    Skill->>CLI: research-hub publish --profile generic or domain profile
     CLI->>Core: Scan text-like workspace files
     Core->>Profile: Enrich records when a non-generic profile is selected
     Profile-->>Core: Domain hints, claims, runs, metrics, statuses
@@ -89,7 +90,7 @@ sequenceDiagram
 | Research Hub skills | Tell agents how to read, index, publish, synthesize, and patch research context. | Replace source evidence with generated summaries. |
 | Research Hub core | Index files, chunk text, build SQLite search, publish generated context. | Make domain-specific claims by default. |
 | Generic profile | Preserve the domain-neutral default behavior. | Add branch, run, or claim assumptions. |
-| `dcase2026` profile | Infer DCASE branches, runs, document roles, metrics, claim hints, and status hints. | Replace source files as the authority. |
+| Domain profile | Infer domain entities, roles, metrics or outcomes, claim hints, and status hints. | Replace source files as the authority. |
 | `_research_context/` | Give agents a generated startup reading surface. | Become the source of truth. |
 
 ## Invocation Policy
@@ -109,3 +110,25 @@ research-hub publish --workspace-root . --profile dcase2026
 When a DCASE profile output conflicts with source evidence, the source evidence
 wins. Generated fields such as `claim_type_hint`, `status_hint`, and inferred
 `branch` are navigation aids, not final research claims.
+
+## Appendix: DCASE2026 profile
+
+```mermaid
+flowchart TD
+    BASE["Generic index record"] --> DCASE["dcase2026 profile"]
+    DCASE --> B["branch inference<br/>main6 / main22 / main23 / main24"]
+    DCASE --> R["run inference"]
+    DCASE --> ROLE["document roles<br/>contract / status / result / summary"]
+    DCASE --> M["metric extraction<br/>DCASE-like / harmonic / official"]
+    DCASE --> C["claim hints<br/>deployable / diagnostic / oracle / negative"]
+
+    B --> OUT["DCASE enriched context"]
+    R --> OUT
+    ROLE --> OUT
+    M --> OUT
+    C --> OUT
+
+    OUT --> RUNS["runs.jsonl"]
+    OUT --> CLAIMS["claims.jsonl"]
+    OUT --> PACKS["agent_context/main6.json etc."]
+```

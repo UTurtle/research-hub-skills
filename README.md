@@ -17,23 +17,23 @@ flowchart TD
     IDX --> CORE["research_hub core<br/>file scan, chunks, SQLite FTS"]
 
     CORE --> GEN["generic profile<br/>domain-neutral default"]
-    CORE --> DCASE["dcase2026 profile<br/>optional enrichment"]
+    CORE --> PROF["optional domain profile<br/>pluggable enrichment"]
 
     GEN --> G1["documents.jsonl"]
     GEN --> G2["document_chunks.jsonl"]
     GEN --> G3["search_index.sqlite"]
 
-    DCASE --> D1["branch / run inference"]
-    DCASE --> D2["document roles"]
-    DCASE --> D3["metrics"]
-    DCASE --> D4["claim and status hints"]
+    PROF --> P1["domain entities<br/>runs / papers / trials / cases"]
+    PROF --> P2["domain roles<br/>contract / result / protocol / summary"]
+    PROF --> P3["domain signals<br/>metrics / scores / outcomes"]
+    PROF --> P4["claim and status hints"]
 
-    D1 --> EOUT["enriched index"]
-    D2 --> EOUT
-    D3 --> EOUT
-    D4 --> EOUT
+    P1 --> EOUT["profile-enriched index"]
+    P2 --> EOUT
+    P3 --> EOUT
+    P4 --> EOUT
 
-    EOUT --> R1["runs.jsonl"]
+    EOUT --> R1["domain records<br/>runs.jsonl / papers.jsonl / trials.jsonl"]
     EOUT --> R2["claims.jsonl"]
     EOUT --> R3["manifest.json"]
 
@@ -51,6 +51,10 @@ flowchart TD
 
 The generated context and panel are projections. The original workspace files
 remain the source of truth.
+
+The `dcase2026` profile is the first concrete domain profile. Other domains can
+reuse the same slot to infer their own entities, evidence records, metrics, and
+claim boundaries.
 
 ## One-command workspace install
 
@@ -75,7 +79,29 @@ python -m research_hub.cli pull-context --workspace-root .
 python -m research_hub.cli open --workspace-root .
 ```
 
-## Optional DCASE2026 profile
+## Domain profiles
+
+Profiles enrich the generic index with domain-specific interpretation. The core
+package remains domain-neutral; profiles are optional.
+
+```mermaid
+flowchart LR
+    BASE["Base index record<br/>path, sha1, mtime, chunks"] --> SELECT{"Selected profile"}
+
+    SELECT -->|"generic"| GENERIC["No domain assumptions"]
+    SELECT -->|"dcase2026"| DCASE["branches, runs, metrics, claims"]
+    SELECT -->|"paper-review"| PAPERS["papers, methods, datasets, baselines"]
+    SELECT -->|"ml-experiment"| ML["experiments, configs, ablations, artifacts"]
+    SELECT -->|"robotics-lab"| ROBOT["trials, robots, sensors, environments"]
+
+    GENERIC --> CTX["_research_context/"]
+    DCASE --> CTX
+    PAPERS --> CTX
+    ML --> CTX
+    ROBOT --> CTX
+```
+
+### Appendix: DCASE2026 profile
 
 The default profile stays domain-neutral. For DCASE2026-style workspaces, add
 `--profile dcase2026` to enrich the index with inferred branches, runs,

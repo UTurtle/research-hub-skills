@@ -3,6 +3,11 @@
 This document fixes the intended relationship between Superpowers process
 skills, Codex/plugin skills, and the `research-hub-skills` package.
 
+Process trail:
+
+- Design: `docs/superpowers/specs/2026-04-30-research-hub-skill-map-design.md`
+- Plan: `docs/superpowers/plans/2026-04-30-research-hub-skill-map.md`
+
 The short version:
 
 - Superpowers skills define how Codex should work.

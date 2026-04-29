@@ -11,6 +11,9 @@ The short version:
   package into a domain-specific tool.
 - `dcase2026` is an appendix example of that profile mechanism.
 
+For autonomous ML agent, personal wiki, vector store, and graph memory
+integration patterns, see `docs/integrations.md`.
+
 ## Skill Ecosystem
 
 ```mermaid

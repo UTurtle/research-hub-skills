@@ -56,6 +56,10 @@ The `dcase2026` profile is the first concrete domain profile. Other domains can
 reuse the same slot to infer their own entities, evidence records, metrics, and
 claim boundaries.
 
+See `docs/integrations.md` for how this context layer can support
+`ml-intern`-style autonomous ML agents, personal wikis, vector stores, and graph
+memory backends.
+
 ## One-command workspace install
 
 ```bash

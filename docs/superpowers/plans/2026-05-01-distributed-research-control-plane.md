@@ -72,11 +72,11 @@ flowchart TD
 | --- | --- | ---: | --- | --- |
 | Core workspace indexing | P0 | 55% | In progress | Basic `publish`, JSONL chunks, SQLite FTS, DCASE profile exist. |
 | Unified read-side library substrate | P0 | 35% | Planned | Design and implementation plan exist; first code slice still pending. |
-| Workspace registry for A/B/C | P0 | 0% | Not started | Needed to model machine, storage, tailnet path, inbox, role. |
-| Central intake and upload ledger | P0 | 0% | Not started | Needed for user-uploaded materials and related-work notes. |
-| Dispatch proposal and approval gate | P0 | 0% | Not started | Needed before any workspace receives writes. |
-| Per-workspace inbox protocol | P0 | 0% | Not started | Needed for local agents to receive approved requests. |
-| Human library/control panel | P1 | 20% | Partial | Static panel exists; needs library lenses and intake/approval views. |
+| Workspace registry for A/B/C | P0 | 80% | Minimal implementation complete | Models machine, storage role, inbox path, and capabilities. Needs richer validation and sync policy. |
+| Central intake and upload ledger | P0 | 75% | Minimal implementation complete | Copies files/folders/ZIPs into hub blob store and records `intake/items.jsonl`. |
+| Dispatch proposal and approval gate | P0 | 65% | Minimal implementation complete | Deterministic proposal scoring and approval command exist. Needs richer evidence citations. |
+| Per-workspace inbox protocol | P0 | 65% | Minimal implementation complete | Approved requests write hub outbox and workspace inbox JSON files. Needs status return flow. |
+| Human library/control panel | P1 | 35% | Partial | Static panel exists plus intake/proposal/approved request view. Needs interactive approval UI. |
 | Agent startup interface | P1 | 20% | Planned | `agent_context/INDEX.json` planned, not implemented. |
 | Vector and graph export records | P1 | 10% | Planned | Spec exists; file-based exports not implemented. |
 | Tailnet sync transport | P2 | 0% | Not started | Can start as shared path or Git-backed state hub. |
@@ -139,7 +139,7 @@ _research_context/workspace_registry.json
 - [ ] Copy registry summary into `_research_context/workspace_registry.json`.
 - [ ] Test that B/C with `research_ssd` cannot be selected as default blob archive targets.
 
-**Progress:** 0%
+**Progress:** 80% minimal code complete; richer validation and context copy remain.
 
 ### P0.2: Read-Side Unified Library Snapshot
 
@@ -216,7 +216,7 @@ _research_context/retrieval/graph_edges.jsonl
 - [ ] Render new intake items in `panel/intake.html`.
 - [ ] Do not write to A/B/C workspaces during intake.
 
-**Progress:** 0%
+**Progress:** 75% minimal code complete; richer document conversion adapters remain.
 
 ### P0.4: Dispatch Proposal Engine
 
@@ -269,7 +269,7 @@ _research_context/retrieval/graph_edges.jsonl
 - [ ] Add reasons and source evidence used for the recommendation.
 - [ ] Render pending proposals in the panel.
 
-**Progress:** 0%
+**Progress:** 65% minimal code complete; richer ranking and evidence citations remain.
 
 ### P0.5: Approval Gate And Workspace Outbox
 
@@ -296,7 +296,7 @@ _research_context/retrieval/graph_edges.jsonl
 - [ ] Keep approved blobs on A HDD when they are large library artifacts.
 - [ ] For B/C, send lightweight request metadata and references to A-hosted blobs when possible.
 
-**Progress:** 0%
+**Progress:** 65% minimal code complete; rejection flow and proposal status mutation remain.
 
 ### P0.6: Per-Workspace Inbox Protocol
 
@@ -327,7 +327,7 @@ _research_context/inbox/rejected/*.json
 - [ ] Ensure local agents must inspect source evidence before modifying original workspace files.
 - [ ] Ensure rejected requests preserve reason and do not disappear.
 
-**Progress:** 0%
+**Progress:** 65% minimal code complete; local status return protocol remains.
 
 ## P1 Workstreams
 

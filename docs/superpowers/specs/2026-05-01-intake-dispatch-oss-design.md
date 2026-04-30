@@ -47,6 +47,22 @@ The core must work without internet access, vector databases, graph databases,
 or a web server. External libraries are welcome when they are optional and
 license-compatible.
 
+Strategically, this is an agent-driven lazy workspace skill, not a driver
+server. The hub should know enough to index, route, propose, and audit work, but
+it should not pretend to own every machine or eagerly synchronize every file.
+Each workspace stays mostly asleep until a relevant approved request appears in
+its inbox. Then the local agent wakes up with the right context, reads source
+evidence from the hub or local workspace, and decides the concrete edit or
+experiment plan inside that workspace.
+
+This framing keeps the system efficient:
+
+- no always-on central orchestrator is required,
+- no B/C SSD storage is consumed for central library blobs by default,
+- no original workspace path is modified during intake or proposal,
+- no workspace-local work starts before human approval,
+- agents can still see the distributed research estate as one library.
+
 ## Minimum Architecture
 
 ```mermaid
@@ -307,4 +323,3 @@ Integration test:
 - Whether the first panel remains static HTML or gains a local FastAPI server.
 - Whether MarkItDown is installed by default in a `[docs]` extra or kept as a
   manually enabled plugin.
-

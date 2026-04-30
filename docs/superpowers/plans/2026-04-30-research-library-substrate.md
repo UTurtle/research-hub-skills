@@ -17,7 +17,6 @@
 - Create: `src/research_hub/library.py`
 - Modify: `src/research_hub/indexer.py`
 - Modify: `src/research_hub/cli.py`
-- Modify: `src/research_hub/context.py`
 
 - [ ] **Step 1: Write the failing generic output test**
 
@@ -450,7 +449,7 @@ def write_profile_outputs(
     return {"runs": len(runs), "claims": len(claims)}
 ```
 
-- [ ] **Step 6: Ensure generated files are projected to the workspace**
+- [ ] **Step 6: Verify generated files are projected to the workspace**
 
 No extra copy code is needed for `agent_context/`, `retrieval/`, or
 `library.md` if Task 1 Step 4 writes them into `hub_context_dir` before:
@@ -475,7 +474,7 @@ Expected: PASS.
 - [ ] **Step 8: Commit Task 1**
 
 ```bash
-git add tests/test_library_outputs.py src/research_hub/library.py src/research_hub/indexer.py src/research_hub/cli.py src/research_hub/context.py
+git add tests/test_library_outputs.py src/research_hub/library.py src/research_hub/indexer.py src/research_hub/cli.py
 git commit -m "Add generic research library outputs"
 ```
 
@@ -484,7 +483,7 @@ git commit -m "Add generic research library outputs"
 **Files:**
 - Modify: `tests/test_library_outputs.py`
 - Modify: `src/research_hub/library.py`
-- Modify: `src/research_hub/panel.py` if `agent_context` placement needs alignment
+- Modify: `src/research_hub/cli.py`
 
 - [ ] **Step 1: Write the failing DCASE enrichment test**
 
@@ -555,10 +554,11 @@ Expected: FAIL if `agent_context/INDEX.json` is built before branch-specific pac
 
 - [ ] **Step 3: Keep profile packs available in context**
 
-If the test fails because `main6.json` is absent from `context_packs`, verify
-that Task 1 Step 4 was applied exactly. The publish order must copy
+Verify that Task 1 Step 4 was applied exactly. The publish order must copy
 `panel/agent_context/*.json` into `hub_context_dir/agent_context/` before
-calling `build_library_outputs(hub_context_dir)`.
+calling `build_library_outputs(hub_context_dir)`. Do not modify
+`src/research_hub/panel.py` for this task; the existing panel builder already
+creates branch-specific packs in `panel/agent_context/`.
 
 - [ ] **Step 4: Run the DCASE test to verify it passes**
 
@@ -583,7 +583,7 @@ Expected: PASS.
 - [ ] **Step 6: Commit Task 2**
 
 ```bash
-git add tests/test_library_outputs.py src/research_hub/library.py src/research_hub/cli.py src/research_hub/panel.py
+git add tests/test_library_outputs.py src/research_hub/library.py src/research_hub/cli.py
 git commit -m "Enrich research library outputs for profiles"
 ```
 

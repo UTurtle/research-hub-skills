@@ -124,7 +124,7 @@ Profile outputs include:
 - `claims.jsonl`
 - `manifest.json`
 - `panel/index.html`
-- `panel/agent_context/<branch>.json`
+- `_research_context/agent_context/<branch>.json`
 
 The generated records are navigation aids only. Source workspace files remain
 authoritative, and uncertain claims should stay marked as `unknown` or

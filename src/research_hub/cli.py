@@ -31,6 +31,7 @@ from research_hub.registry import (
     registry_path,
     save_registry,
 )
+from research_hub.web import run_web
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -46,6 +47,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     add_intake_parsers(subparsers)
     add_dispatch_parsers(subparsers)
     add_hub_panel_parser(subparsers)
+    add_web_parser(subparsers)
     args = parser.parse_args(argv)
     if args.command == "registry-init":
         hub_root = Path(args.hub).resolve()
@@ -101,6 +103,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         panel_dir = hub_root / "panel"
         build_hub_panel(hub_root, panel_dir)
         print(panel_dir / "index.html")
+        return
+    if args.command == "web":
+        run_web(
+            hub_root=Path(args.hub).resolve(),
+            host=args.host,
+            port=args.port,
+            token=args.token,
+        )
         return
     workspace_root = Path(args.workspace_root).resolve()
     hub_root = Path(args.hub).resolve()
@@ -220,6 +230,17 @@ def add_hub_panel_parser(subparsers: argparse._SubParsersAction) -> None:
         "--hub",
         default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
     )
+
+
+def add_web_parser(subparsers: argparse._SubParsersAction) -> None:
+    web = subparsers.add_parser("web")
+    web.add_argument(
+        "--hub",
+        default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
+    )
+    web.add_argument("--host", default="127.0.0.1")
+    web.add_argument("--port", type=int, default=8787)
+    web.add_argument("--token", default=os.environ.get("RESEARCH_HUB_TOKEN", ""))
 
 
 def make_index_config(

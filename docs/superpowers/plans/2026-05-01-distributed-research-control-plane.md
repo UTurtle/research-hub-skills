@@ -76,7 +76,7 @@ flowchart TD
 | Central intake and upload ledger | P0 | 75% | Minimal implementation complete | Copies files/folders/ZIPs into hub blob store and records `intake/items.jsonl`. |
 | Dispatch proposal and approval gate | P0 | 65% | Minimal implementation complete | Deterministic proposal scoring and approval command exist. Needs richer evidence citations. |
 | Per-workspace inbox protocol | P0 | 65% | Minimal implementation complete | Approved requests write hub outbox and workspace inbox JSON files. Needs status return flow. |
-| Human library/control panel | P1 | 35% | Partial | Static panel exists plus intake/proposal/approved request view. Needs interactive approval UI. |
+| Human library/control panel | P1 | 55% | Minimal WebUI implemented | Static panel plus tiny server-rendered WebUI for registry, intake, proposal, and approval. Needs richer UX and status views. |
 | Agent startup interface | P1 | 20% | Planned | `agent_context/INDEX.json` planned, not implemented. |
 | Vector and graph export records | P1 | 10% | Planned | Spec exists; file-based exports not implemented. |
 | Tailnet sync transport | P2 | 0% | Not started | Can start as shared path or Git-backed state hub. |

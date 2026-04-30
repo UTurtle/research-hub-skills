@@ -42,10 +42,17 @@ def test_handle_post_adds_workspace_and_intake(tmp_path: Path) -> None:
             "inbox_path": str(tmp_path / "inbox" / "B"),
             "can_run_training": "on",
             "capabilities": "torch cuda",
+            "transport": "ssh",
+            "ssh_host": "linux-b",
+            "ssh_user": "research",
+            "remote_inbox": "/home/research/.research_hub/inbox",
         },
     )
     assert message == "workspace-added"
-    assert load_registry(hub)["workspaces"][0]["workspace_id"] == "B"
+    workspace = load_registry(hub)["workspaces"][0]
+    assert workspace["workspace_id"] == "B"
+    assert workspace["transport"] == "ssh"
+    assert workspace["ssh_host"] == "linux-b"
 
     message = handle_post(
         hub,

@@ -22,6 +22,13 @@ class WorkspaceRecord:
     can_store_library_blobs: bool = False
     can_run_training: bool = False
     capabilities: list[str] = field(default_factory=list)
+    transport: str = "local_path"
+    ssh_host: str = ""
+    ssh_user: str = ""
+    remote_inbox: str = ""
+    hub_ssh_host: str = ""
+    hub_ssh_user: str = ""
+    hub_ssh_root: str = ""
 
 
 def registry_path(hub_root: Path) -> Path:

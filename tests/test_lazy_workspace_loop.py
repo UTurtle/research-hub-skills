@@ -160,6 +160,43 @@ def test_dispatch_approval_creates_outbox_and_inbox(tmp_path: Path) -> None:
     assert "torch" in inbox_files[0].read_text(encoding="utf-8").lower()
 
 
+def test_ssh_transport_approval_records_dry_run_commands(tmp_path: Path) -> None:
+    hub = tmp_path / "hub"
+    source = tmp_path / "note.md"
+    source.write_text("main26 torch review", encoding="utf-8")
+    add_workspace(
+        hub,
+        WorkspaceRecord(
+            workspace_id="B",
+            machine_role="4080",
+            storage_role="research_ssd",
+            root_hint="/mnt/ssd/B",
+            tailnet_hint="",
+            inbox_path="/home/research/.research_hub/inbox",
+            can_store_library_blobs=False,
+            can_run_training=True,
+            capabilities=["torch", "main26"],
+            transport="ssh",
+            ssh_host="linux-b",
+            ssh_user="research",
+            remote_inbox="/home/research/.research_hub/inbox",
+            hub_ssh_host="linux-a",
+            hub_ssh_user="research",
+            hub_ssh_root="/data/research_hub",
+        ),
+    )
+    item = create_intake_item(hub, source, "Torch note", "related_work_note")
+    proposal = create_dispatch_proposal(hub, item["item_id"])
+
+    requests = approve_proposal(hub, proposal["proposal_id"], ["B"])
+
+    delivery = requests[0]["delivery"]
+    assert delivery["transport"] == "ssh"
+    assert delivery["dry_run"] is True
+    assert delivery["commands"][0][:3] == ["ssh", "research@linux-b", "mkdir"]
+    assert requests[0]["source_refs"][0]["hub_access"]["host"] == "research@linux-a"
+
+
 def test_hub_panel_includes_intake_and_proposals(tmp_path: Path) -> None:
     hub = tmp_path / "hub"
     source = tmp_path / "note.md"

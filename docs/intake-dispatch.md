@@ -51,6 +51,52 @@ daemon. By default it binds to `127.0.0.1` for tunnel-first usage. If exposed on
 a tailnet address, use `--token <value>` and pass the same value as `?token=...`
 or `X-Research-Hub-Token`.
 
+## Recommended Windows And Linux Layout
+
+The preferred research layout is:
+
+- Windows machine: browser and approval panel only.
+- Linux A: hub, WebUI process, 3090/14TB archive, intake blob store.
+- Linux B/C: active GPU research workspaces, local inboxes, local agents.
+
+Windows connects to Linux A through an SSH tunnel. Linux A dispatches small
+request JSON files to Linux B/C through SSH.
+
+```text
+Windows browser
+  -> ssh -L 8787:127.0.0.1:8787 linux-a
+Linux A hub/archive/WebUI
+  -> ssh/scp request JSON
+Linux B/C inbox/local agent/GPU workspace
+```
+
+## SSH Workspace Transport
+
+`registry-add` supports `local_path` and `ssh` transports.
+
+Local path is the simplest mode:
+
+```powershell
+research-hub registry-add --hub C:\research_hub --workspace-id B --machine-role 4080 --storage-role research_ssd --root-hint /mnt/ssd/B --inbox-path C:\research_hub\inbox\B --can-run-training --capability torch
+```
+
+SSH mode records Linux destination information:
+
+```powershell
+research-hub registry-add --hub C:\research_hub --workspace-id B --machine-role 4080 --storage-role research_ssd --root-hint /mnt/ssd/B --inbox-path /home/research/.research_hub/inbox --transport ssh --ssh-host linux-b --ssh-user research --remote-inbox /home/research/.research_hub/inbox --hub-ssh-host linux-a --hub-ssh-user research --hub-ssh-root /data/research_hub --can-run-training --capability cuda --capability torch
+```
+
+By default, SSH dispatch is a dry run in the audit record. It records the
+`ssh mkdir` and `scp` commands that would deliver the request, without executing
+remote commands. To actually push a request to a remote Linux inbox, approve with:
+
+```powershell
+research-hub dispatch-approve --hub C:\research_hub --proposal-id proposal-20260501010102-12345678 --workspace-id B --execute-transport
+```
+
+This keeps the first workflow safe: configure and inspect the generated command
+plan first, then enable execution once SSH keys and remote inbox paths are known.
+
 ## Safety Rules
 
 - Intake copies user material into the hub and never writes to original

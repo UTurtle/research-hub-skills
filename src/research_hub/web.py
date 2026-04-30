@@ -99,6 +99,13 @@ def handle_post(hub_root: Path, path: str, form: dict[str, str]) -> str:
                 can_store_library_blobs=form.get("can_store_library_blobs") == "on",
                 can_run_training=form.get("can_run_training") == "on",
                 capabilities=split_capabilities(form.get("capabilities", "")),
+                transport=form.get("transport", "local_path") or "local_path",
+                ssh_host=form.get("ssh_host", ""),
+                ssh_user=form.get("ssh_user", ""),
+                remote_inbox=form.get("remote_inbox", ""),
+                hub_ssh_host=form.get("hub_ssh_host", ""),
+                hub_ssh_user=form.get("hub_ssh_user", ""),
+                hub_ssh_root=form.get("hub_ssh_root", ""),
             ),
         )
         return "workspace-added"
@@ -175,7 +182,8 @@ def render_registry(workspaces: list[dict[str, Any]]) -> str:
             f"<td>{html.escape(str(item.get('workspace_id', '')))}</td>"
             f"<td>{html.escape(str(item.get('machine_role', '')))}</td>"
             f"<td>{html.escape(str(item.get('storage_role', '')))}</td>"
-            f"<td><code>{html.escape(str(item.get('inbox_path', '')))}</code></td>"
+            f"<td><code>{html.escape(str(item.get('transport', 'local_path')))}:"
+            f"{html.escape(str(item.get('inbox_path', '')))}</code></td>"
             f"<td>{html.escape(', '.join(item.get('capabilities', [])))}</td>"
             "</tr>"
         )
@@ -197,6 +205,16 @@ def render_registry_form() -> str:
   <input name="root_hint" placeholder="root hint">
   <input name="tailnet_hint" placeholder="tailnet host">
   <input name="inbox_path" placeholder="inbox path" required>
+  <select name="transport">
+    <option value="local_path">local_path</option>
+    <option value="ssh">ssh</option>
+  </select>
+  <input name="ssh_host" placeholder="linux-b">
+  <input name="ssh_user" placeholder="research">
+  <input name="remote_inbox" placeholder="/home/research/.research_hub/inbox">
+  <input name="hub_ssh_host" placeholder="linux-a">
+  <input name="hub_ssh_user" placeholder="research">
+  <input name="hub_ssh_root" placeholder="/data/research_hub">
   <input name="capabilities" placeholder="cuda torch dcase2026">
   <label><input type="checkbox" name="can_store_library_blobs">blob store</label>
   <label><input type="checkbox" name="can_run_training">training</label>

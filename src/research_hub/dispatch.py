@@ -6,10 +6,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from research_hub.inbox import write_inbox_request
 from research_hub.intake import load_intake_items
 from research_hub.jsonl import append_jsonl, read_jsonl, write_json
 from research_hub.registry import load_registry
+from research_hub.transport import add_hub_access_refs, deliver_request
 
 PROPOSALS_PATH = Path("dispatch") / "proposals.jsonl"
 APPROVED_PATH = Path("dispatch") / "approved.jsonl"
@@ -129,6 +129,7 @@ def approve_proposal(
     hub_root: Path,
     proposal_id: str,
     workspace_ids: list[str],
+    execute_transport: bool = False,
 ) -> list[dict[str, Any]]:
     proposal = find_proposal(hub_root, proposal_id)
     item = find_intake_item(hub_root, str(proposal["item_id"]))
@@ -161,8 +162,11 @@ def approve_proposal(
             "status": "pending",
             "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         }
+        request = add_hub_access_refs(request, workspace)
         write_json(hub_root / "outbox" / workspace_id / f"{request_id}.json", request)
-        write_inbox_request(Path(str(workspace["inbox_path"])), request)
+        delivery = deliver_request(workspace, request, execute_transport)
+        request["delivery"] = delivery
+        write_json(hub_root / "outbox" / workspace_id / f"{request_id}.json", request)
         append_jsonl(hub_root / APPROVED_PATH, request)
         requests.append(request)
     return requests

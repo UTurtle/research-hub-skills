@@ -68,6 +68,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 can_store_library_blobs=args.can_store_library_blobs,
                 can_run_training=args.can_run_training,
                 capabilities=args.capability,
+                transport=args.transport,
+                ssh_host=args.ssh_host,
+                ssh_user=args.ssh_user,
+                remote_inbox=args.remote_inbox,
+                hub_ssh_host=args.hub_ssh_host,
+                hub_ssh_user=args.hub_ssh_user,
+                hub_ssh_root=args.hub_ssh_root,
             ),
         )
         print(registry_path(hub_root))
@@ -94,6 +101,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             Path(args.hub).resolve(),
             args.proposal_id,
             args.workspace_id,
+            execute_transport=args.execute_transport,
         )
         for request in requests:
             print(request["request_id"])
@@ -194,6 +202,17 @@ def add_registry_parsers(subparsers: argparse._SubParsersAction) -> None:
     registry_add.add_argument("--can-store-library-blobs", action="store_true")
     registry_add.add_argument("--can-run-training", action="store_true")
     registry_add.add_argument("--capability", action="append", default=[])
+    registry_add.add_argument(
+        "--transport",
+        choices=("local_path", "ssh"),
+        default="local_path",
+    )
+    registry_add.add_argument("--ssh-host", default="")
+    registry_add.add_argument("--ssh-user", default="")
+    registry_add.add_argument("--remote-inbox", default="")
+    registry_add.add_argument("--hub-ssh-host", default="")
+    registry_add.add_argument("--hub-ssh-user", default="")
+    registry_add.add_argument("--hub-ssh-root", default="")
 
 
 def add_intake_parsers(subparsers: argparse._SubParsersAction) -> None:
@@ -222,6 +241,7 @@ def add_dispatch_parsers(subparsers: argparse._SubParsersAction) -> None:
     )
     dispatch_approve.add_argument("--proposal-id", required=True)
     dispatch_approve.add_argument("--workspace-id", action="append", required=True)
+    dispatch_approve.add_argument("--execute-transport", action="store_true")
 
 
 def add_hub_panel_parser(subparsers: argparse._SubParsersAction) -> None:

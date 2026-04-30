@@ -53,7 +53,7 @@ flowchart TD
     DOUT --> O2["claims.jsonl"]
     DOUT --> O3["manifest.json"]
     DOUT --> O4["panel/index.html"]
-    DOUT --> O5["panel/agent_context/&lt;branch&gt;.json"]
+    DOUT --> O5["_research_context/agent_context/&lt;branch&gt;.json"]
 
     GOUT --> CTX
     DOUT --> CTX

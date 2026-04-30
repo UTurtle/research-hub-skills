@@ -17,6 +17,7 @@ See `docs/oss-reuse.md` for the current open-source reuse policy. In short:
 `ml-intern` is an architecture reference, while Graphiti-style temporal graph
 memory and LanceDB-style vector search are better treated as optional adapter
 targets rather than core dependencies.
+For UI reuse candidates (MIT/Apache-2.0), see `docs/oss-ui-shortlist.md`.
 
 ## Agent Integration Model
 
@@ -36,7 +37,7 @@ flowchart TD
     RH --> HUB["Research Hub<br/>index + context projection"]
     HUB --> CTX["_research_context/"]
     HUB --> PANEL["panel/index.html"]
-    HUB --> PACKS["agent_context/*.json"]
+    HUB --> PACKS["_research_context/agent_context/*.json"]
 
     CTX --> AGENT
     PACKS --> AGENT
@@ -67,7 +68,7 @@ Agents should treat the generated hub as a read-optimized interface:
 | `_research_context/claims.jsonl` | Optional profile output for claim-like evidence. |
 | `_research_context/manifest.json` | Snapshot metadata for the generated index. |
 | `panel/index.html` | Human-readable overview. |
-| `panel/agent_context/*.json` | Profile-specific focused packs for agents. |
+| `_research_context/agent_context/*.json` | Profile-specific focused packs for agents. |
 
 Generated files are navigation aids. Original workspace files remain the source
 of truth.

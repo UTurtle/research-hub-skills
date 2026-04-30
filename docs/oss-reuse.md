@@ -15,7 +15,6 @@ The preferred pattern is:
 | Project | License status checked | How to use it | Reuse level |
 | --- | --- | --- | --- |
 | `huggingface/ml-intern` | No license file found during review. Do not copy code. | Architecture reference for agent loop, tool routing, context management, and ML workflow ownership. | Ideas only |
-| `microsoft/graphrag` | MIT license. | Reference for graph/RAG export shape, graph-oriented retrieval, and optional downstream graph ingestion. | Adapter-compatible |
 | `getzep/graphiti` | Apache-2.0 license. | Reference for temporal graph memory, provenance, and evolving facts. Potential downstream graph backend. | Adapter-compatible |
 | `lancedb/lancedb` | Apache-2.0 license. | Potential embedded vector backend for `vector_records.jsonl`. | Optional dependency / adapter |
 
@@ -23,7 +22,7 @@ The preferred pattern is:
 
 - Do not copy `ml-intern` code unless a compatible license is explicitly
   verified later.
-- Do not add GraphRAG, Graphiti, or LanceDB as core dependencies.
+- Do not add Graphiti or LanceDB as core dependencies.
 - Do define exports that these projects or similar tools can ingest:
   - `retrieval/vector_records.jsonl`
   - `retrieval/graph_nodes.jsonl`
@@ -42,7 +41,7 @@ flowchart TD
     RH --> AC["agent_context/INDEX.json"]
 
     VEC --> LANCE["LanceDB adapter<br/>optional"]
-    GN --> GRAPH["GraphRAG / Graphiti adapter<br/>optional"]
+    GN --> GRAPH["Graphiti-style temporal graph adapter<br/>optional"]
     GE --> GRAPH
     AC --> AGENT["ml-intern-style agent<br/>architecture reference"]
 

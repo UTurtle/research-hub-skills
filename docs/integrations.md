@@ -14,8 +14,9 @@ agents a durable map of local evidence, generated summaries, claims, runs, and
 profile-specific context packs.
 
 See `docs/oss-reuse.md` for the current open-source reuse policy. In short:
-`ml-intern` is an architecture reference, while GraphRAG, Graphiti, and LanceDB
-are better treated as optional adapter targets rather than core dependencies.
+`ml-intern` is an architecture reference, while Graphiti-style temporal graph
+memory and LanceDB-style vector search are better treated as optional adapter
+targets rather than core dependencies.
 
 ## Agent Integration Model
 
@@ -114,7 +115,7 @@ The same generated interface can feed personal wiki and retrieval systems.
 flowchart TD
     HUB["Research Hub outputs"] --> MD["Markdown projection<br/>personal wiki / Obsidian"]
     HUB --> VEC["Vector store<br/>semantic retrieval"]
-    HUB --> GRAPH["Graph / GraphRAG<br/>entities and relations"]
+    HUB --> GRAPH["Graph export<br/>entities and relations"]
     HUB --> TEMP["Temporal graph<br/>changing facts over time"]
 
     MD --> READER["Human reading"]

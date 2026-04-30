@@ -45,17 +45,30 @@ UI reuse must follow these rules:
 | `huggingface/ml-intern` | No license file found during review. Do not copy code. | Architecture reference for agent loop, tool routing, context management, and ML workflow ownership. | Ideas only |
 | `getzep/graphiti` | Apache-2.0 license. | Reference for temporal graph memory, provenance, and evolving facts. Potential downstream graph backend. | Adapter-compatible |
 | `lancedb/lancedb` | Apache-2.0 license. | Potential embedded vector backend for `vector_records.jsonl`. | Optional dependency / adapter |
+| `microsoft/markitdown` | MIT license. | Optional intake converter for PDF, Office, HTML, ZIP traversal, and other uploaded research materials. | Optional dependency / adapter |
+| `Unstructured-IO/unstructured` | Apache-2.0 license. | Optional heavier document ETL path for complex PDFs, DOCX, HTML, and table-heavy material. | Optional dependency / adapter |
+| `fastapi/fastapi` | MIT license. | Optional local upload and approval server after file contracts stabilize. | Optional dependency / adapter |
+| `pydantic/pydantic` | MIT license. | Optional strict schema validation for registry, intake, proposal, approval, outbox, and inbox records. | Optional dependency / adapter |
+| `duckdb/duckdb` | MIT license. | Optional local analytics/query layer over JSONL/Parquet hub state for reports and audits. | Optional dependency / adapter |
+| `chroma-core/chroma` | Apache-2.0 license. | Optional vector backend alternative for `vector_records.jsonl`. | Optional dependency / adapter |
+| `langchain-ai/langchain` | MIT license. | Optional loader/retriever integration surface; not required for the core control plane. | Optional dependency / adapter |
 
 ## Immediate Decisions
 
 - Do not copy `ml-intern` code unless a compatible license is explicitly
   verified later.
 - Do not add Graphiti or LanceDB as core dependencies.
+- Do not add MarkItDown, Unstructured, FastAPI, Pydantic, DuckDB, Chroma, or
+  LangChain as core dependencies until a focused adapter needs them.
 - Do define exports that these projects or similar tools can ingest:
   - `retrieval/vector_records.jsonl`
   - `retrieval/graph_nodes.jsonl`
   - `retrieval/graph_edges.jsonl`
   - `agent_context/INDEX.json`
+  - `intake/items.jsonl`
+  - `dispatch/proposals.jsonl`
+  - `outbox/<workspace_id>/<request_id>.json`
+  - `_research_context/inbox/pending/<request_id>.json`
 - Keep attribution in this document and in any future adapter file that copies
   or derives code.
 

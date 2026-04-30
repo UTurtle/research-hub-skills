@@ -10,6 +10,34 @@ The preferred pattern is:
 3. only copy source code when the license is verified and attribution is added,
 4. keep heavy vector, graph, and agent runtimes optional.
 
+## UI Component Intake
+
+UI components can be adopted only through a strict intake review so the core
+stays lightweight, static-friendly, and license-safe.
+
+### Allowed licenses
+
+- Required allowlist: `MIT`, `Apache-2.0`.
+- `GPL`/`AGPL` licensed code must not be included in the core package.
+
+### Evaluation checklist
+
+Before intake, evaluate and record:
+
+- maintenance recency (recent commit and/or recent release activity),
+- bundle size impact,
+- ability to ship as a static build artifact,
+- dependency count,
+- published security advisory history.
+
+### Required integration pattern
+
+UI reuse must follow these rules:
+
+1. prioritize `adapter + standalone static build`,
+2. do not couple UI components to the core Python package,
+3. render in read-only mode from `_research_context/panel/`.
+
 ## Candidate Matrix
 
 | Project | License status checked | How to use it | Reuse level |

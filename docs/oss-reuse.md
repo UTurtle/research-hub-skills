@@ -62,3 +62,6 @@ When code is copied or substantially adapted from another project:
 
 For now, the implementation should use original code in this repository and
 only design against compatible external interfaces.
+
+See `docs/oss-ui-shortlist.md` for the current MIT/Apache-2.0 UI panel
+candidate list and the recommended first adapter target.

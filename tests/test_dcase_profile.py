@@ -30,6 +30,12 @@ class DcaseProfileTests(unittest.TestCase):
             docs = read_jsonl(index_dir / "documents.jsonl")
             self.assertEqual(docs[0]["source_path"], "note.md")
             self.assertNotIn("branch", docs[0])
+            manifest = json.loads(
+                (index_dir / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["profile"], "generic")
+            self.assertEqual(manifest["documents"], 1)
+            self.assertIn("root_hash", manifest)
             self.assertFalse((index_dir / "runs.jsonl").exists())
             self.assertFalse((index_dir / "claims.jsonl").exists())
 

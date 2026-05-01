@@ -13,6 +13,7 @@ from research_hub.context import (
     copy_tree,
     write_default_context,
 )
+from research_hub.collector import collect_index, load_collection_status
 from research_hub.dispatch import approve_proposal, create_dispatch_proposal
 from research_hub.git_sync import sync_pull, sync_push
 from research_hub.indexer import (
@@ -48,6 +49,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     add_dispatch_parsers(subparsers)
     add_hub_panel_parser(subparsers)
     add_web_parser(subparsers)
+    add_collect_parsers(subparsers)
     args = parser.parse_args(argv)
     if args.command == "registry-init":
         hub_root = Path(args.hub).resolve()
@@ -119,6 +121,27 @@ def main(argv: Sequence[str] | None = None) -> None:
             port=args.port,
             token=args.token,
         )
+        return
+    if args.command == "collect-index":
+        result = collect_index(
+            hub_root=Path(args.hub).resolve(),
+            workspace_id=args.workspace_id,
+            source_context=Path(args.source_context).resolve(),
+            force=args.force,
+        )
+        state = "copied" if result.get("changed") else "skipped"
+        copied_count = len(result.get("copied_files", []))
+        print(f"{state}\t{copied_count} files\t{result['target_dir']}")
+        return
+    if args.command == "index-status":
+        status = load_collection_status(Path(args.hub).resolve())
+        for workspace in status.get("workspaces", []):
+            print(
+                f"{workspace['workspace_id']}\t"
+                f"{workspace.get('documents', 0)} docs\t"
+                f"{workspace.get('created_at', '')}\t"
+                f"{workspace.get('root_hash', '')[:12]}"
+            )
         return
     workspace_root = Path(args.workspace_root).resolve()
     hub_root = Path(args.hub).resolve()
@@ -261,6 +284,22 @@ def add_web_parser(subparsers: argparse._SubParsersAction) -> None:
     web.add_argument("--host", default="127.0.0.1")
     web.add_argument("--port", type=int, default=8787)
     web.add_argument("--token", default=os.environ.get("RESEARCH_HUB_TOKEN", ""))
+
+
+def add_collect_parsers(subparsers: argparse._SubParsersAction) -> None:
+    collect = subparsers.add_parser("collect-index")
+    collect.add_argument(
+        "--hub",
+        default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
+    )
+    collect.add_argument("--workspace-id", required=True)
+    collect.add_argument("--source-context", required=True)
+    collect.add_argument("--force", action="store_true")
+    status = subparsers.add_parser("index-status")
+    status.add_argument(
+        "--hub",
+        default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
+    )
 
 
 def make_index_config(

@@ -97,6 +97,41 @@ research-hub dispatch-approve --hub C:\research_hub --proposal-id proposal-20260
 This keeps the first workflow safe: configure and inspect the generated command
 plan first, then enable execution once SSH keys and remote inbox paths are known.
 
+## Lightweight Index Collection
+
+Do not use Git as the live memory/index bus. Git is appropriate for code,
+approved plans, specs, and durable decisions, but generated live indexes can
+grow quickly and slow research work down.
+
+The lightweight path is manifest-first collection:
+
+```powershell
+research-hub publish --workspace-root /mnt/ssd/B --hub /tmp/local_hub --workspace-id B
+research-hub collect-index --hub C:\research_hub --workspace-id B --source-context /mnt/ssd/B/_research_context
+research-hub index-status --hub C:\research_hub
+```
+
+`collect-index` reads only `manifest.json` first. If the `root_hash` matches the
+latest collected snapshot, it skips copying. If the hash changed, it copies the
+small generated context files into:
+
+```text
+<hub>/snapshots/<workspace_id>/latest/
+```
+
+The WebUI shows an Index Freshness table from:
+
+```text
+<hub>/snapshots/STATUS.json
+```
+
+Recommended transport policy:
+
+- request/status JSON: SSH/SCP,
+- workspace index snapshots: manifest-first collect, later rsync-over-SSH,
+- source files: stay in the original workspace and are fetched lazily,
+- Git: decisions/specs/code only, not generated live indexes.
+
 ## Safety Rules
 
 - Intake copies user material into the hub and never writes to original

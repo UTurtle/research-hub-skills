@@ -78,6 +78,7 @@ flowchart TD
 | Per-workspace inbox protocol | P0 | 65% | Minimal implementation complete | Approved requests write hub outbox and workspace inbox JSON files. Needs status return flow. |
 | Human library/control panel | P1 | 55% | Minimal WebUI implemented | Static panel plus tiny server-rendered WebUI for registry, intake, proposal, and approval. Needs richer UX and status views. |
 | Agent startup interface | P1 | 20% | Planned | `agent_context/INDEX.json` planned, not implemented. |
+| Manifest-first index collection | P0/P1 | 55% | Minimal implementation complete | `collect-index` skips unchanged snapshots by `root_hash`; WebUI shows freshness. SSH/rsync remote pull remains next. |
 | Vector and graph export records | P1 | 10% | Planned | Spec exists; file-based exports not implemented. |
 | SSH/local transport | P0/P1 | 55% | Minimal implementation complete | `local_path` writes directly; `ssh` records dry-run commands and can execute with `--execute-transport`. Status return still pending. |
 | Tailnet/Git sync transport | P2 | 10% | Deferred | Tailnet paths and Git-backed state hub remain optional after SSH baseline. |

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from research_hub.collector import load_collection_status
 from research_hub.dispatch import (
     approve_proposal,
     create_dispatch_proposal,
@@ -145,6 +146,7 @@ def render_home(hub_root: Path, message: str = "") -> str:
     registry = load_registry(hub_root)
     intake_items = load_intake_items(hub_root)
     proposals = load_proposals(hub_root)
+    status = load_collection_status(hub_root)
     workspaces = registry.get("workspaces", [])
     return "\n".join([
         "<!doctype html>",
@@ -162,6 +164,7 @@ def render_home(hub_root: Path, message: str = "") -> str:
         "<h1>Research Hub</h1>",
         "<p>Lazy workspace control plane. Original workspace files remain authoritative.</p>",
         f"<p class='msg'>{html.escape(message)}</p>" if message else "",
+        render_index_status(status),
         render_registry(workspaces),
         render_registry_form(),
         render_intake(intake_items),
@@ -169,6 +172,25 @@ def render_home(hub_root: Path, message: str = "") -> str:
         render_proposals(proposals, workspaces),
         "</body></html>",
     ])
+
+
+def render_index_status(status: dict[str, Any]) -> str:
+    rows = [
+        "<h2>Index Freshness</h2>",
+        "<table><tr><th>Workspace</th><th>Docs</th><th>Indexed</th><th>Collected</th><th>Hash</th></tr>",
+    ]
+    for item in status.get("workspaces", []):
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(item.get('workspace_id', '')))}</td>"
+            f"<td>{html.escape(str(item.get('documents', 0)))}</td>"
+            f"<td>{html.escape(str(item.get('created_at', '')))}</td>"
+            f"<td>{html.escape(str(item.get('collected_at', '')))}</td>"
+            f"<td><code>{html.escape(str(item.get('root_hash', ''))[:12])}</code></td>"
+            "</tr>"
+        )
+    rows.append("</table>")
+    return "\n".join(rows)
 
 
 def render_registry(workspaces: list[dict[str, Any]]) -> str:

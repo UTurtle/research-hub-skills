@@ -1,0 +1,33 @@
+{
+  "runtime_files": [
+    "src/research_hub/",
+    "skills/",
+    "templates/",
+    "scripts/install_workspace.sh",
+    "scripts/fetch_skills.sh",
+    "README.md",
+    "docs/INSTALL.md",
+    "docs/intake-dispatch.md",
+    "docs/skill-map.md",
+    "LICENSE",
+    "pyproject.toml"
+  ],
+  "development_files": [
+    "tests/",
+    "docs/dev/",
+    "docs/integrations.md",
+    "docs/oss-reuse.md",
+    "docs/oss-ui-shortlist.md",
+    "AGENTS.md",
+    "CODEX_TASK.md"
+  ],
+  "generated_files_do_not_commit": [
+    ".research_hub_local/",
+    ".research_hub_state/",
+    "_research_context/",
+    "snapshots/",
+    "intake/blobs/",
+    "*.sqlite",
+    "*.db"
+  ]
+}

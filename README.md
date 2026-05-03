@@ -3,11 +3,35 @@
 Domain-neutral, index-first research workspace context layer for Codex and
 other AI agents.
 
-This project does not require NAS. It supports three hub modes:
+This project does not require NAS, but a NAS or archive disk is a convenient
+hub location when Linux workspaces can mount it. The recommended default is:
 
-1. local mode: `.research_hub_local`,
-2. shared folder mode: any mounted or synced path, and
-3. Git state hub mode: a separate cloned repository used as shared state.
+1. keep original files in each workspace,
+2. publish lightweight `_research_context` indexes locally,
+3. collect only changed index snapshots into a hub path,
+4. fetch source files lazily only when an agent needs them.
+
+See `docs/INSTALL.md` for distributed operation with Windows as a panel machine
+and Linux machines as hub/workspaces.
+
+## File Split
+
+Install/runtime files:
+
+- `src/research_hub/`
+- `skills/`
+- `templates/`
+- `scripts/`
+- `docs/INSTALL.md`
+- `docs/intake-dispatch.md`
+
+Development-only files:
+
+- `tests/`
+- `docs/dev/`
+- long planning/spec history
+
+See `install/manifest.json` and `docs/DEVELOPMENT.md`.
 
 ## Architecture
 
@@ -69,6 +93,14 @@ bash .research-hub-skills/scripts/install_workspace.sh
 codex
 ```
 
+For a distributed setup, set `RESEARCH_HUB` to the mounted hub/NAS path before
+publishing:
+
+```bash
+export RESEARCH_HUB="/mnt/nas/research_hub"
+bash .research-hub-skills/scripts/install_workspace.sh
+```
+
 ## Manual use
 
 ```bash
@@ -81,6 +113,33 @@ python -m research_hub.cli init --workspace-root .
 python -m research_hub.cli publish --workspace-root .
 python -m research_hub.cli pull-context --workspace-root .
 python -m research_hub.cli open --workspace-root .
+```
+
+Collect a workspace index snapshot into the hub:
+
+```bash
+python -m research_hub.cli collect-index \
+  --hub /mnt/nas/research_hub \
+  --workspace-id B \
+  --source-context /mnt/ssd/B/_research_context
+python -m research_hub.cli index-status --hub /mnt/nas/research_hub
+```
+
+If the snapshot hash did not change, collection is skipped.
+
+Run the tiny WebUI on the hub machine:
+
+```bash
+python -m research_hub.cli web \
+  --hub /mnt/nas/research_hub \
+  --host 127.0.0.1 \
+  --port 8787
+```
+
+From Windows:
+
+```powershell
+ssh -L 8787:127.0.0.1:8787 user@linux-a
 ```
 
 ## Domain profiles
@@ -130,9 +189,14 @@ The generated records are navigation aids only. Source workspace files remain
 authoritative, and uncertain claims should stay marked as `unknown` or
 `needs_review`.
 
-## Git state hub mode
+## Git State Hub Mode
 
-Use a separate private state repository as the hub.
+Git state hub mode exists, but it is not recommended for live generated
+indexes. Git is best for code, specs, and durable decisions. Use SSH, local
+paths, or mounted storage for generated index snapshots and inbox/status JSON.
+
+If you still want to use a separate private state repository for small approved
+state:
 
 ```bash
 git clone https://github.com/<owner>/<private-research-hub-state>.git \

@@ -149,7 +149,7 @@ _research_context/workspace_registry.json
 
 **Files to create or modify:**
 
-- Continue from: `docs/superpowers/plans/2026-04-30-research-library-substrate.md`
+- Continue from: `docs/dev/superpowers/plans/2026-04-30-research-library-substrate.md`
 - Create: `src/research_hub/library.py`
 - Create: `tests/test_library_outputs.py`
 - Modify: `src/research_hub/cli.py`

@@ -84,6 +84,19 @@ See `docs/integrations.md` for how this context layer can support
 `ml-intern`-style autonomous ML agents, personal wikis, vector stores, and graph
 memory backends.
 
+## Agent Install Contract
+
+If an agent is asked to install this repo or its skill, it should install the
+Codex skill first, then ask for any missing setup values before connecting the
+current workspace:
+
+- `RESEARCH_HUB`: NAS/archive path, for example `/mnt/nas/research_hub`
+- `RESEARCH_WORKSPACE_ID`: short workspace name, for example `A`, `B`, or
+  `dcase2026`
+
+After those values are known, run
+`.research-hub-skills/scripts/install_workspace.sh` for the current workspace.
+
 ## One-command workspace install
 
 ```bash

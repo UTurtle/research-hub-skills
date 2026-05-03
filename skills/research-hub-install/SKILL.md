@@ -1,6 +1,6 @@
 ---
 name: research-hub-install
-description: Use when installing or refreshing research-hub-skills in a workspace, especially when the user needs to choose a NAS/shared hub path and workspace id before running the installer.
+description: Install, set up, bootstrap, connect, or refresh the UTurtle/research-hub-skills repo in a workspace. Use when the user says to install this repo/skill, connect the current workspace to Research Hub, set up a NAS/shared hub path, or run the Research Hub installer, even if they do not name this skill explicitly.
 ---
 
 # research-hub-install
@@ -22,10 +22,13 @@ Workflow:
    workspace directory name.
 5. Optionally ask for `RESEARCH_HOST_ID` only when the host name matters.
    Default to `local`.
-6. Run:
+6. If the user only said "install this repo/skill", still ask the missing
+   `RESEARCH_HUB` and `RESEARCH_WORKSPACE_ID` questions before connecting the
+   workspace.
+7. Run:
    `RESEARCH_HUB=<hub> RESEARCH_WORKSPACE_ID=<id> bash .research-hub-skills/scripts/install_workspace.sh <workspace>`
-7. Verify `<workspace>/_research_context/manifest.json` exists.
-8. If this is a remote Linux workspace, tell the user the hub can later run
+8. Verify `<workspace>/_research_context/manifest.json` exists.
+9. If this is a remote Linux workspace, tell the user the hub can later run
    `collect-index-ssh` against `<workspace>/_research_context`.
 
 Do not copy raw research files into the hub. Generated index/context files are

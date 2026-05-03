@@ -97,6 +97,18 @@ current workspace:
 After those values are known, run
 `.research-hub-skills/scripts/install_workspace.sh` for the current workspace.
 
+For A/B/C machines that all see the same NAS, start on one coordinator machine
+and bootstrap the network over SSH:
+
+```bash
+bash .research-hub-skills/scripts/bootstrap_shared_nas.sh
+```
+
+The script asks whether SSH should use Tailscale hostnames/IPs, asks for each
+workspace id/root, writes the NAS registry, installs remote workspaces by SSH,
+and installs daily timers. It is dry-run by default; re-run with `--execute`
+after reviewing the commands.
+
 ## One-command workspace install
 
 ```bash

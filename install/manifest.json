@@ -7,6 +7,7 @@
     "scripts/install_workspace.sh",
     "scripts/install_codex_skills.sh",
     "scripts/install_user_timer.sh",
+    "scripts/bootstrap_shared_nas.sh",
     "scripts/fetch_skills.sh",
     "README.md",
     "docs/INSTALL.md",

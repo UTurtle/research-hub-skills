@@ -10,6 +10,23 @@ hub path, usually a NAS mount or local archive path.
 
 Workflow:
 
+Use the shared-NAS bootstrap when the user wants to connect multiple machines
+from one coordinator machine. Prefer this when they mention A/B/C machines,
+Tailscale, SSH, NAS visible from every machine, or installing remote
+workspaces without moving to each computer.
+
+Shared NAS bootstrap:
+
+1. Ask whether all machines can see the same NAS path.
+2. Ask whether SSH targets should use Tailscale hostnames/IPs.
+3. From the coordinator machine, run
+   `bash .research-hub-skills/scripts/bootstrap_shared_nas.sh`.
+4. Review the dry-run commands with the user.
+5. Re-run with `--execute` only after the SSH targets, NAS path, and workspace
+   roots are confirmed.
+
+Single workspace workflow:
+
 1. Identify the workspace root. Use the current directory unless the user names
    another path.
 2. Ensure this repo exists as `.research-hub-skills`. If missing, run

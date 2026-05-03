@@ -47,6 +47,18 @@ After this, Codex can use the `research-hub-install` skill. The skill should
 ask for the hub/NAS path and workspace id, then run the existing workspace
 installer.
 
+For shared NAS networks, start from one coordinator machine:
+
+```bash
+bash .research-hub-skills/scripts/bootstrap_shared_nas.sh
+```
+
+The bootstrap asks whether to use Tailscale SSH targets, asks for each remote
+workspace id/root, installs the repo on remote machines over SSH, publishes
+their context into the shared NAS, installs daily timers, and records every
+workspace in `registry/workspaces.json`. It is dry-run by default; add
+`--execute` only after reviewing the commands.
+
 On each Linux research workspace:
 
 ```bash

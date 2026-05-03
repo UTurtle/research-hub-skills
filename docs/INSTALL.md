@@ -112,6 +112,7 @@ Linux A -> collect index snapshot over SSH
 Automatic after configuration:
 
 - workspace indexing with `publish`,
+- foreground polling updates with `watch`,
 - hub snapshot collection with `collect-index`,
 - SSH snapshot collection with `collect-index-ssh` dry-run and execute modes,
 - intake storage,
@@ -123,7 +124,7 @@ Automatic after configuration:
 
 Not automatic yet:
 
-- continuous daemon/watch mode,
+- installed systemd/user service for `watch`,
 - scheduled SSH pull/watch automation,
 - local agent status return flow,
 - remote SSH end-to-end validation on real Linux hosts,
@@ -151,6 +152,20 @@ python -m research_hub.cli collect-index \
   --workspace-id B \
   --source-context /mnt/ssd/B/_research_context
 ```
+
+To keep a mounted workspace context updated while a terminal is open:
+
+```bash
+python -m research_hub.cli watch \
+  --hub /mnt/nas/research_hub \
+  --workspace-id B \
+  --workspace-root /mnt/ssd/B \
+  --interval 30
+```
+
+This polls indexable text files and republishes only when path, size, or mtime
+changes. It is intentionally simple and dependency-free; install it under
+systemd, tmux, or another supervisor if it must survive logout.
 
 If the workspace is only reachable over SSH, first publish on the remote Linux
 workspace:

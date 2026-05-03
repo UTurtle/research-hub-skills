@@ -293,3 +293,49 @@ def test_init_writes_research_hub_workspace_marker(tmp_path: Path) -> None:
     assert "Detected workspace id: `B`" in marker_text
     assert (workspace / "AGENTS.md").exists()
     assert (workspace / "_research_context" / "START_HERE.md").exists()
+
+
+def test_watch_once_publishes_updated_workspace_context(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    workspace = tmp_path / "workspace"
+    hub = tmp_path / "hub"
+    workspace.mkdir()
+    (workspace / "note.md").write_text("first note", encoding="utf-8")
+
+    main([
+        "watch",
+        "--once",
+        "--workspace-root",
+        str(workspace),
+        "--hub",
+        str(hub),
+        "--workspace-id",
+        "B",
+    ])
+
+    (workspace / "new.txt").write_text("second note", encoding="utf-8")
+    main([
+        "watch",
+        "--once",
+        "--workspace-root",
+        str(workspace),
+        "--hub",
+        str(hub),
+        "--workspace-id",
+        "B",
+    ])
+
+    output = capsys.readouterr().out
+    assert "published\tB" in output
+    manifest = json.loads(
+        (workspace / "_research_context" / "manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert manifest["documents"] == 2
+    chunks = (workspace / "_research_context" / "document_chunks.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert "new.txt" in chunks

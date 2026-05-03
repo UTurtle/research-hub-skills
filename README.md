@@ -137,6 +137,16 @@ python -m research_hub.cli pull-context --workspace-root .
 python -m research_hub.cli open --workspace-root .
 ```
 
+Keep a workspace context updated while a terminal or supervisor is running:
+
+```bash
+python -m research_hub.cli watch \
+  --hub /mnt/nas/research_hub \
+  --workspace-root . \
+  --workspace-id "$RESEARCH_WORKSPACE_ID" \
+  --interval 30
+```
+
 Collect a workspace index snapshot into the hub:
 
 ```bash

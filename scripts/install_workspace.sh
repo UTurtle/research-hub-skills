@@ -29,3 +29,7 @@ python -m research_hub.cli pull-context \
   --host-id "${HOST_ID}"
 
 echo "Research context installed at: ${WORKSPACE_ROOT}/_research_context"
+echo "To refresh once:"
+echo "  RESEARCH_HUB=\"${HUB_ROOT}\" RESEARCH_WORKSPACE_ID=\"${WORKSPACE_ID}\" bash ${REPO_ROOT}/scripts/install_workspace.sh \"${WORKSPACE_ROOT}\""
+echo "To keep it updated in the foreground:"
+echo "  PYTHONPATH=\"${REPO_ROOT}/src\" python -m research_hub.cli watch --workspace-root \"${WORKSPACE_ROOT}\" --hub \"${HUB_ROOT}\" --workspace-id \"${WORKSPACE_ID}\""

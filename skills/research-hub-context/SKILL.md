@@ -31,3 +31,11 @@ Startup order:
 3. Read `_research_context/START_HERE.md`.
 4. Search `_research_context/document_chunks.jsonl` and `documents.jsonl`.
 5. Only then open raw workspace files needed for evidence.
+
+Freshness:
+
+- If the user asks whether new `.md` or `.txt` files are reflected, check the
+  manifest timestamp and document count.
+- If context is stale and a terminal/supervisor is available, run
+  `python -m research_hub.cli watch --workspace-root <workspace> --hub <hub> --workspace-id <id>`.
+  Use `--once` for a one-shot refresh.

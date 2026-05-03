@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Sequence
 
@@ -26,6 +27,7 @@ from research_hub.indexer import (
     DEFAULT_INCLUDE_EXTENSIONS,
     IndexConfig,
     build_index,
+    iter_indexable_files,
 )
 from research_hub.intake import create_intake_item
 from research_hub.panel import build_hub_panel, build_panel
@@ -44,10 +46,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in (
         "init", "publish", "pull-context", "open", "sync-push",
-        "sync-pull",
+        "sync-pull", "watch",
     ):
         sub_parser = subparsers.add_parser(command)
         add_common_args(sub_parser)
+        if command == "watch":
+            sub_parser.add_argument("--interval", type=float, default=30.0)
+            sub_parser.add_argument("--once", action="store_true")
+            sub_parser.add_argument("--max-cycles", type=int, default=0)
     add_registry_parsers(subparsers)
     add_intake_parsers(subparsers)
     add_dispatch_parsers(subparsers)
@@ -181,15 +187,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         return
     if args.command == "publish":
-        config = make_index_config(
-            workspace_root, args.workspace_id, args.host_id, index_dir,
-            args.profile
+        run_publish(
+            workspace_root=workspace_root,
+            workspace_id=args.workspace_id,
+            host_id=args.host_id,
+            profile=args.profile,
+            index_dir=index_dir,
+            hub_context_dir=hub_context_dir,
+            context_dir=context_dir,
+            panel_dir=panel_dir,
         )
-        build_index(config)
-        write_default_context(hub_context_dir)
-        copy_index_to_context(index_dir, hub_context_dir)
-        copy_tree(hub_context_dir, context_dir)
-        build_panel(hub_context_dir, panel_dir)
         return
     if args.command == "pull-context":
         if hub_context_dir.exists():
@@ -205,6 +212,21 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
     if args.command == "sync-pull":
         sync_pull(hub_root)
+        return
+    if args.command == "watch":
+        run_watch(
+            workspace_root=workspace_root,
+            workspace_id=args.workspace_id,
+            host_id=args.host_id,
+            profile=args.profile,
+            index_dir=index_dir,
+            hub_context_dir=hub_context_dir,
+            context_dir=context_dir,
+            panel_dir=panel_dir,
+            interval=args.interval,
+            once=args.once,
+            max_cycles=args.max_cycles,
+        )
         return
 
 
@@ -400,6 +422,88 @@ def write_research_hub_marker(
     if workspace_id is not None:
         content += f"\nDetected workspace id: `{workspace_id}`\n"
     marker_path.write_text(content, encoding="utf-8")
+
+
+def run_publish(
+    workspace_root: Path,
+    workspace_id: str,
+    host_id: str,
+    profile: str,
+    index_dir: Path,
+    hub_context_dir: Path,
+    context_dir: Path,
+    panel_dir: Path,
+) -> None:
+    config = make_index_config(
+        workspace_root, workspace_id, host_id, index_dir, profile
+    )
+    build_index(config)
+    write_default_context(hub_context_dir)
+    copy_index_to_context(index_dir, hub_context_dir)
+    copy_tree(hub_context_dir, context_dir)
+    build_panel(hub_context_dir, panel_dir)
+
+
+def workspace_signature(
+    workspace_root: Path,
+    workspace_id: str,
+    host_id: str,
+    profile: str,
+) -> tuple[tuple[str, int, int], ...]:
+    config = make_index_config(
+        workspace_root,
+        workspace_id,
+        host_id,
+        workspace_root / "_research_context" / ".watch_tmp",
+        profile,
+    )
+    signature: list[tuple[str, int, int]] = []
+    for path in iter_indexable_files(config):
+        stat = path.stat()
+        signature.append((
+            path.relative_to(workspace_root).as_posix(),
+            stat.st_size,
+            stat.st_mtime_ns,
+        ))
+    return tuple(sorted(signature))
+
+
+def run_watch(
+    workspace_root: Path,
+    workspace_id: str,
+    host_id: str,
+    profile: str,
+    index_dir: Path,
+    hub_context_dir: Path,
+    context_dir: Path,
+    panel_dir: Path,
+    interval: float,
+    once: bool,
+    max_cycles: int,
+) -> None:
+    previous: tuple[tuple[str, int, int], ...] | None = None
+    cycles = 0
+    while True:
+        current = workspace_signature(workspace_root, workspace_id, host_id, profile)
+        if current != previous:
+            run_publish(
+                workspace_root=workspace_root,
+                workspace_id=workspace_id,
+                host_id=host_id,
+                profile=profile,
+                index_dir=index_dir,
+                hub_context_dir=hub_context_dir,
+                context_dir=context_dir,
+                panel_dir=panel_dir,
+            )
+            print(f"published\t{workspace_id}\t{len(current)} files")
+            previous = current
+        else:
+            print(f"unchanged\t{workspace_id}\t{len(current)} files")
+        cycles += 1
+        if once or (max_cycles and cycles >= max_cycles):
+            return
+        time.sleep(interval)
 
 
 if __name__ == "__main__":

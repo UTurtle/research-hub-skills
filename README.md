@@ -147,6 +147,20 @@ python -m research_hub.cli watch \
   --interval 30
 ```
 
+For daily background refresh on Linux:
+
+```bash
+RESEARCH_HUB=/mnt/nas/research_hub \
+RESEARCH_WORKSPACE_ID="$RESEARCH_WORKSPACE_ID" \
+bash .research-hub-skills/scripts/install_user_timer.sh "$PWD"
+```
+
+Before cross-workspace analysis, refresh hub snapshots from the registry:
+
+```bash
+python -m research_hub.cli refresh-hub --hub /mnt/nas/research_hub
+```
+
 Collect a workspace index snapshot into the hub:
 
 ```bash

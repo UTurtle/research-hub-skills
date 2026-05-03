@@ -18,6 +18,7 @@ from research_hub.collector import (
     collect_index,
     collect_index_ssh,
     load_collection_status,
+    write_collection_status,
 )
 from research_hub.dispatch import approve_proposal, create_dispatch_proposal
 from research_hub.git_sync import sync_pull, sync_push
@@ -35,6 +36,7 @@ from research_hub.registry import (
     WorkspaceRecord,
     add_workspace,
     default_registry,
+    load_registry,
     registry_path,
     save_registry,
 )
@@ -161,6 +163,24 @@ def main(argv: Sequence[str] | None = None) -> None:
             state = "copied" if result.get("changed") else "skipped"
             copied_count = len(result.get("copied_files", []))
             print(f"{state}\t{copied_count} files\t{result['target_dir']}")
+        return
+    if args.command == "refresh-hub":
+        results = refresh_hub_from_registry(
+            hub_root=Path(args.hub).resolve(),
+            force=args.force,
+            execute_transport=args.execute_transport,
+        )
+        for result in results:
+            workspace_id = result.get("workspace_id", "unknown")
+            if result.get("error"):
+                print(f"error\t{workspace_id}\t{result['error']}")
+                continue
+            if result.get("dry_run"):
+                print(f"dry-run\t{workspace_id}\t{result['target_dir']}")
+                continue
+            state = "copied" if result.get("changed") else "skipped"
+            copied_count = len(result.get("copied_files", []))
+            print(f"{state}\t{workspace_id}\t{copied_count} files")
         return
     if args.command == "index-status":
         status = load_collection_status(Path(args.hub).resolve())
@@ -361,6 +381,13 @@ def add_collect_parsers(subparsers: argparse._SubParsersAction) -> None:
         "--hub",
         default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
     )
+    refresh = subparsers.add_parser("refresh-hub")
+    refresh.add_argument(
+        "--hub",
+        default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
+    )
+    refresh.add_argument("--force", action="store_true")
+    refresh.add_argument("--execute-transport", action="store_true")
 
 
 def make_index_config(
@@ -504,6 +531,59 @@ def run_watch(
         if once or (max_cycles and cycles >= max_cycles):
             return
         time.sleep(interval)
+
+
+def refresh_hub_from_registry(
+    hub_root: Path,
+    force: bool = False,
+    execute_transport: bool = False,
+) -> list[dict[str, object]]:
+    registry = load_registry(hub_root)
+    results: list[dict[str, object]] = []
+    for record in registry.get("workspaces", []):
+        workspace_id = str(record.get("workspace_id", ""))
+        if not workspace_id:
+            continue
+        transport = str(record.get("transport") or "local_path")
+        root_hint = str(record.get("root_hint") or "")
+        try:
+            if transport == "local_path":
+                if not root_hint:
+                    raise ValueError("missing root_hint")
+                result = collect_index(
+                    hub_root,
+                    workspace_id,
+                    Path(root_hint) / "_research_context",
+                    force=force,
+                )
+            elif transport == "ssh":
+                ssh_host = str(record.get("ssh_host") or "")
+                if not ssh_host:
+                    raise ValueError("missing ssh_host")
+                remote_context = str(
+                    record.get("remote_context")
+                    or f"{root_hint.rstrip('/')}/_research_context"
+                )
+                result = collect_index_ssh(
+                    hub_root=hub_root,
+                    workspace_id=workspace_id,
+                    ssh_host=ssh_host,
+                    ssh_user=str(record.get("ssh_user") or ""),
+                    remote_context=remote_context,
+                    force=force,
+                    execute=execute_transport,
+                )
+            else:
+                raise ValueError(f"unsupported transport: {transport}")
+            results.append(result)
+        except Exception as exc:  # keep refreshing other registered workspaces
+            results.append({
+                "workspace_id": workspace_id,
+                "error": str(exc),
+                "transport": transport,
+            })
+    write_collection_status(hub_root)
+    return results
 
 
 if __name__ == "__main__":

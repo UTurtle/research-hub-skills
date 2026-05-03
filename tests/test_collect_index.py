@@ -9,6 +9,7 @@ from research_hub.collector import (
     collect_index_ssh,
     load_collection_status,
 )
+from research_hub.registry import WorkspaceRecord, add_workspace
 
 
 def write_context(path: Path, root_hash: str = "abc123") -> None:
@@ -106,3 +107,60 @@ def test_collect_index_ssh_cli_dry_run(tmp_path: Path, capsys) -> None:
     output = capsys.readouterr().out
     assert "dry-run" in output
     assert "research@linux-b:/mnt/ssd/B/_research_context/manifest.json" in output
+
+
+def test_refresh_hub_collects_registered_local_workspace(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    hub = tmp_path / "hub"
+    workspace = tmp_path / "workspace"
+    context = workspace / "_research_context"
+    write_context(context)
+    add_workspace(
+        hub,
+        WorkspaceRecord(
+            workspace_id="B",
+            machine_role="4080",
+            storage_role="research_ssd",
+            root_hint=str(workspace),
+            tailnet_hint="",
+            inbox_path=str(tmp_path / "inbox"),
+            can_run_training=True,
+            capabilities=["torch"],
+        ),
+    )
+
+    main(["refresh-hub", "--hub", str(hub)])
+
+    output = capsys.readouterr().out
+    assert "copied\tB\t3 files" in output
+    assert (hub / "snapshots" / "B" / "latest" / "manifest.json").exists()
+
+
+def test_refresh_hub_plans_registered_ssh_workspace(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    hub = tmp_path / "hub"
+    add_workspace(
+        hub,
+        WorkspaceRecord(
+            workspace_id="C",
+            machine_role="4080",
+            storage_role="research_ssd",
+            root_hint="/mnt/ssd/C",
+            tailnet_hint="",
+            inbox_path="/home/research/.research_hub/inbox",
+            can_run_training=True,
+            capabilities=["cuda"],
+            transport="ssh",
+            ssh_host="linux-c",
+            ssh_user="research",
+        ),
+    )
+
+    main(["refresh-hub", "--hub", str(hub)])
+
+    output = capsys.readouterr().out
+    assert "dry-run\tC" in output

@@ -39,3 +39,8 @@ Freshness:
 - If context is stale and a terminal/supervisor is available, run
   `python -m research_hub.cli watch --workspace-root <workspace> --hub <hub> --workspace-id <id>`.
   Use `--once` for a one-shot refresh.
+- If the user asks for another workspace or whole-network analysis, run or
+  propose `python -m research_hub.cli refresh-hub --hub <hub>` before reading
+  hub snapshots. Use `--execute-transport` only when SSH paths are trusted.
+- If recurring freshness is requested on a Linux workspace, install the user
+  timer with `scripts/install_user_timer.sh`; default cadence is daily.

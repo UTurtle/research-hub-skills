@@ -113,6 +113,8 @@ Automatic after configuration:
 
 - workspace indexing with `publish`,
 - foreground polling updates with `watch`,
+- daily workspace publishing via optional `install_user_timer.sh`,
+- registry-based hub refresh with `refresh-hub`,
 - hub snapshot collection with `collect-index`,
 - SSH snapshot collection with `collect-index-ssh` dry-run and execute modes,
 - intake storage,
@@ -124,8 +126,7 @@ Automatic after configuration:
 
 Not automatic yet:
 
-- installed systemd/user service for `watch`,
-- scheduled SSH pull/watch automation,
+- cross-machine timer installation from the hub machine,
 - local agent status return flow,
 - remote SSH end-to-end validation on real Linux hosts,
 - smarter semantic proposal ranking.
@@ -166,6 +167,26 @@ python -m research_hub.cli watch \
 This polls indexable text files and republishes only when path, size, or mtime
 changes. It is intentionally simple and dependency-free; install it under
 systemd, tmux, or another supervisor if it must survive logout.
+
+If daily freshness is enough, install a user timer on each Linux workspace:
+
+```bash
+RESEARCH_HUB=/mnt/nas/research_hub \
+RESEARCH_WORKSPACE_ID=B \
+bash .research-hub-skills/scripts/install_user_timer.sh /mnt/ssd/B
+```
+
+The timer runs `publish` once per day by default. Override the schedule with
+`RESEARCH_HUB_TIMER_INTERVAL`, for example `hourly` or `*-*-* 03:00:00`.
+
+On the NAS/hub machine, refresh registered workspace snapshots before a
+cross-workspace analysis:
+
+```bash
+python -m research_hub.cli refresh-hub --hub /mnt/nas/research_hub
+```
+
+For SSH workspaces this prints a dry-run unless `--execute-transport` is used.
 
 If the workspace is only reachable over SSH, first publish on the remote Linux
 workspace:

@@ -1,191 +1,156 @@
 # research-hub-skills
 
-Domain-neutral, index-first research workspace context layer for Codex and
-other AI agents.
+Shared-NAS research workspace context layer for Codex and other agents.
 
-This project does not require NAS, but a NAS or archive disk is a convenient
-hub location when Linux workspaces can mount it. The recommended default is:
+The current design assumes several Linux research machines can all see the same
+NAS path. Original research files stay in each workspace. The NAS stores only
+lightweight indexes, context projections, registry records, intake items, and
+small UI state.
 
-1. keep original files in each workspace,
-2. publish lightweight `_research_context` indexes locally,
-3. collect only changed index snapshots into a hub path,
-4. fetch source files lazily only when an agent needs them.
+Recommended default:
 
-See `docs/INSTALL.md` for distributed operation with Windows as a panel machine
-and Linux machines as hub/workspaces.
+```text
+A/B/C workspaces
+  original repos, notes, logs, md/txt files stay in place
+  daily publish writes index/context to the shared NAS
 
-## File Split
+Shared NAS
+  registry/workspaces.json
+  index/<workspace-id>/
+  contexts/<workspace-id>/
+  snapshots/<workspace-id>/
+  intake/
+  panel/
 
-Install/runtime files:
+Codex / agents
+  read _research_context locally first
+  read NAS registry/snapshots for cross-workspace work
+  fetch original source paths only when evidence is needed
+```
 
-- `src/research_hub/`
-- `skills/`
-- `templates/`
-- `scripts/`
-- `docs/INSTALL.md`
-- `docs/intake-dispatch.md`
+The older SSH-pull/central-refresh design is preserved at
+[`codex/legacy-ssh-refresh-v0.1`](https://github.com/UTurtle/research-hub-skills/tree/codex/legacy-ssh-refresh-v0.1).
 
-Development-only files:
+## Why
 
-- `tests/`
-- `docs/dev/`
-- long planning/spec history
+Research workspaces tend to be scattered: repos, markdown notes, text logs,
+experiment outputs, paper drafts, and related-work notes live across multiple
+machines. Research Hub makes those scattered workspaces feel like one library
+without moving the original files.
 
-See `install/manifest.json` and `docs/DEVELOPMENT.md`.
+It is intentionally lazy:
 
-## Architecture
+- no heavy database server,
+- no live Git sync for generated indexes,
+- no mandatory vector database,
+- no raw research file migration,
+- daily or foreground refresh is enough for most research notes.
+
+## Main Workflow
 
 ```mermaid
 flowchart TD
-    WS["Research workspace<br/>original files stay in place"] --> IDX["research-hub publish"]
-    IDX --> CORE["research_hub core<br/>file scan, chunks, SQLite FTS"]
+    User["User starts on machine A"] --> Boot["bootstrap_shared_nas.sh"]
+    Boot --> AskNAS["Ask shared NAS path"]
+    Boot --> AskTail["Ask whether SSH uses Tailscale"]
+    Boot --> AskWS["Ask A/B/C workspace ids and roots"]
 
-    CORE --> GEN["generic profile<br/>domain-neutral default"]
-    CORE --> PROF["optional domain profile<br/>pluggable enrichment"]
+    AskWS --> InstallA["Install/publish A"]
+    AskWS --> SSHB["SSH install/publish B"]
+    AskWS --> SSHC["SSH install/publish C"]
 
-    GEN --> G1["documents.jsonl"]
-    GEN --> G2["document_chunks.jsonl"]
-    GEN --> G3["search_index.sqlite"]
+    InstallA --> NAS["Shared NAS"]
+    SSHB --> NAS
+    SSHC --> NAS
 
-    PROF --> P1["domain entities<br/>runs / papers / trials / cases"]
-    PROF --> P2["domain roles<br/>contract / result / protocol / summary"]
-    PROF --> P3["domain signals<br/>metrics / scores / outcomes"]
-    PROF --> P4["claim and status hints"]
+    NAS --> Registry["registry/workspaces.json"]
+    NAS --> Contexts["contexts/A, contexts/B, contexts/C"]
+    NAS --> Panel["Tiny WebUI"]
+    NAS --> Intake["Intake + dispatch state"]
 
-    P1 --> EOUT["profile-enriched index"]
-    P2 --> EOUT
-    P3 --> EOUT
-    P4 --> EOUT
-
-    EOUT --> R1["domain records<br/>runs.jsonl / papers.jsonl / trials.jsonl"]
-    EOUT --> R2["claims.jsonl"]
-    EOUT --> R3["manifest.json"]
-
-    G1 --> CTX["_research_context/"]
-    G2 --> CTX
-    G3 --> CTX
-    R1 --> CTX
-    R2 --> CTX
-    R3 --> CTX
-
-    CTX --> AGENT["Codex / research agents<br/>startup reading surface"]
-    CTX --> PANEL["panel/index.html<br/>human reading surface"]
-    PANEL --> PACKS["agent_context/&lt;branch&gt;.json"]
+    Contexts --> Agent["Codex research-hub-context skill"]
+    Registry --> Agent
+    Panel --> Human["Human library view"]
 ```
 
-The generated context and panel are projections. The original workspace files
-remain the source of truth.
-
-The `dcase2026` profile is the first concrete domain profile. Other domains can
-reuse the same slot to infer their own entities, evidence records, metrics, and
-claim boundaries.
-
-See `docs/integrations.md` for how this context layer can support
-`ml-intern`-style autonomous ML agents, personal wikis, vector stores, and graph
-memory backends.
-
-## Agent Install Contract
-
-If an agent is asked to install this repo or its skill, it should install the
-Codex skill first, then ask for any missing setup values before connecting the
-current workspace:
-
-- `RESEARCH_HUB`: NAS/archive path, for example `/mnt/nas/research_hub`
-- `RESEARCH_WORKSPACE_ID`: short workspace name, for example `A`, `B`, or
-  `dcase2026`
-
-After those values are known, run
-`.research-hub-skills/scripts/install_workspace.sh` for the current workspace.
-
-For A/B/C machines that all see the same NAS, start on one coordinator machine
-and bootstrap the network over SSH:
+Start from one coordinator machine:
 
 ```bash
+git clone https://github.com/UTurtle/research-hub-skills.git .research-hub-skills
+bash .research-hub-skills/scripts/install_codex_skills.sh
 bash .research-hub-skills/scripts/bootstrap_shared_nas.sh
 ```
 
-The script asks whether SSH should use Tailscale hostnames/IPs, asks for each
-workspace id/root, writes the NAS registry, installs remote workspaces by SSH,
-and installs daily timers. It is dry-run by default; re-run with `--execute`
-after reviewing the commands.
+The bootstrap is dry-run by default. It asks:
 
-## One-command workspace install
+- shared NAS hub path, for example `/mnt/nas/research_hub`,
+- whether to use Tailscale hostnames/IPs for SSH,
+- local workspace id/root,
+- remote workspace SSH target and root,
+- whether to install daily timers.
+
+After reviewing the dry-run:
+
+```bash
+bash .research-hub-skills/scripts/bootstrap_shared_nas.sh --execute
+```
+
+## Install Modes
+
+Install Codex skills only:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/UTurtle/research-hub-skills/main/install.sh | bash
 ```
 
-Without `curl`, use Git directly:
-
-```bash
-git clone https://github.com/UTurtle/research-hub-skills.git .research-hub-skills
-bash .research-hub-skills/scripts/install_codex_skills.sh
-codex
-```
-
-The installed `research-hub-install` skill tells Codex to ask for the hub/NAS
-path and workspace id before running the workspace installer.
-
-For a prompt-free distributed setup, set `RESEARCH_HUB` to the mounted hub/NAS
-path and `RESEARCH_WORKSPACE_ID` to the workspace name before installing:
+Install one workspace directly:
 
 ```bash
 export RESEARCH_HUB="/mnt/nas/research_hub"
-export RESEARCH_WORKSPACE_ID="$(basename "$PWD")"
-bash .research-hub-skills/scripts/install_workspace.sh
+export RESEARCH_WORKSPACE_ID="B"
+bash .research-hub-skills/scripts/install_workspace.sh /mnt/ssd/B
 ```
 
-## Manual use
+Install daily background publishing on Linux:
 
 ```bash
-export PYTHONPATH="$PWD/.research-hub-skills/src:${PYTHONPATH:-}"
-export RESEARCH_HUB="${RESEARCH_HUB:-$PWD/.research_hub_local}"
-export RESEARCH_WORKSPACE_ID="${RESEARCH_WORKSPACE_ID:-$(basename "$PWD")}"
-export RESEARCH_HOST_ID="${RESEARCH_HOST_ID:-local}"
-
-python -m research_hub.cli init --workspace-root .
-python -m research_hub.cli publish --workspace-root .
-python -m research_hub.cli pull-context --workspace-root .
-python -m research_hub.cli open --workspace-root .
+RESEARCH_HUB=/mnt/nas/research_hub \
+RESEARCH_WORKSPACE_ID=B \
+bash .research-hub-skills/scripts/install_user_timer.sh /mnt/ssd/B
 ```
 
-Keep a workspace context updated while a terminal or supervisor is running:
+The timer defaults to `daily`. Override with `RESEARCH_HUB_TIMER_INTERVAL`, for
+example `hourly` or `*-*-* 03:00:00`.
+
+## Runtime Use
+
+Local refresh:
+
+```bash
+python -m research_hub.cli publish \
+  --hub /mnt/nas/research_hub \
+  --workspace-root /mnt/ssd/B \
+  --workspace-id B
+```
+
+Foreground watch when a terminal/supervisor is available:
 
 ```bash
 python -m research_hub.cli watch \
   --hub /mnt/nas/research_hub \
-  --workspace-root . \
-  --workspace-id "$RESEARCH_WORKSPACE_ID" \
+  --workspace-root /mnt/ssd/B \
+  --workspace-id B \
   --interval 30
 ```
 
-For daily background refresh on Linux:
-
-```bash
-RESEARCH_HUB=/mnt/nas/research_hub \
-RESEARCH_WORKSPACE_ID="$RESEARCH_WORKSPACE_ID" \
-bash .research-hub-skills/scripts/install_user_timer.sh "$PWD"
-```
-
-Before cross-workspace analysis, refresh hub snapshots from the registry:
+Refresh hub snapshot status from the NAS registry:
 
 ```bash
 python -m research_hub.cli refresh-hub --hub /mnt/nas/research_hub
-```
-
-Collect a workspace index snapshot into the hub:
-
-```bash
-python -m research_hub.cli collect-index \
-  --hub /mnt/nas/research_hub \
-  --workspace-id B \
-  --source-context /mnt/ssd/B/_research_context
 python -m research_hub.cli index-status --hub /mnt/nas/research_hub
 ```
 
-If the snapshot hash did not change, collection is skipped.
-
-Run the tiny WebUI on the hub machine:
+Run the tiny WebUI on a Linux/NAS-visible machine:
 
 ```bash
 python -m research_hub.cli web \
@@ -194,91 +159,119 @@ python -m research_hub.cli web \
   --port 8787
 ```
 
-From Windows:
+From Windows or another client:
 
 ```powershell
 ssh -L 8787:127.0.0.1:8787 user@linux-a
 ```
 
-## Domain profiles
+Open `http://127.0.0.1:8787`.
 
-Profiles enrich the generic index with domain-specific interpretation. The core
-package remains domain-neutral; profiles are optional.
+## What Stays From The Older Design
 
-```mermaid
-flowchart LR
-    BASE["Base index record<br/>path, sha1, mtime, chunks"] --> SELECT{"Selected profile"}
+Keep:
 
-    SELECT -->|"generic"| GENERIC["No domain assumptions"]
-    SELECT -->|"dcase2026"| DCASE["branches, runs, metrics, claims"]
-    SELECT -->|"paper-review"| PAPERS["papers, methods, datasets, baselines"]
-    SELECT -->|"ml-experiment"| ML["experiments, configs, ablations, artifacts"]
-    SELECT -->|"robotics-lab"| ROBOT["trials, robots, sensors, environments"]
+- tiny server-rendered WebUI,
+- NAS as the direct place to read generated context and small uploaded files,
+- manifest-first collection and `root_hash` skip logic,
+- SSH transport as a fallback or remote bootstrap channel,
+- inbox/dispatch JSON flow for agent-approved placement requests.
 
-    GENERIC --> CTX["_research_context/"]
-    DCASE --> CTX
-    PAPERS --> CTX
-    ML --> CTX
-    ROBOT --> CTX
+De-emphasize:
+
+- Git as a live generated-state bus,
+- central machine pulling everything by default,
+- copying raw research files into the hub.
+
+## Skills
+
+`research-hub-install`:
+install, bootstrap shared NAS, ask for Tailscale/SSH details, connect
+workspaces, and install timers.
+
+`research-hub-context`:
+runtime reading skill. It should trigger when the user asks for document
+aggregation, related work, reports, cross-workspace comparison, overall research
+state, or paper-writing context.
+
+Other research skills remain smaller helpers for indexing, publishing,
+literature organization, documentation patching, and discussion synthesis.
+
+## Generated Context
+
+Each workspace gets:
+
+```text
+RESEARCH_HUB.md
+AGENTS.md
+_research_context/
+  START_HERE.md
+  manifest.json
+  documents.jsonl
+  document_chunks.jsonl
+  source_links.jsonl
+  search_index.sqlite
 ```
 
-### Appendix: DCASE2026 profile
+The NAS gets:
 
-The default profile stays domain-neutral. For DCASE2026-style workspaces, add
-`--profile dcase2026` to enrich the index with inferred branches, runs,
-document roles, metrics, claim hints, and status hints.
+```text
+registry/workspaces.json
+index/<workspace-id>/
+contexts/<workspace-id>/
+snapshots/<workspace-id>/latest/
+intake/
+outbox/
+panel/
+```
+
+Agents should treat generated files as navigation aids. Original source paths
+remain authoritative.
+
+## Domain Profiles
+
+The default profile is generic. Optional profiles can enrich the index with
+domain-specific records.
 
 ```bash
-python -m research_hub.cli publish --workspace-root . \
+python -m research_hub.cli publish \
+  --hub /mnt/nas/research_hub \
+  --workspace-root . \
+  --workspace-id dcase \
   --profile dcase2026
-python -m research_hub.cli pull-context --workspace-root . \
-  --profile dcase2026
 ```
 
-Profile outputs include:
+The DCASE2026 profile adds inferred runs, metrics, claims, status hints, and
+claim-boundary aids. These are still evidence pointers, not replacement truth.
 
-- `runs.jsonl`
-- `claims.jsonl`
-- `manifest.json`
-- `panel/index.html`
-- `_research_context/agent_context/<branch>.json`
+## Indexed Files
 
-The generated records are navigation aids only. Source workspace files remain
-authoritative, and uncertain claims should stay marked as `unknown` or
-`needs_review`.
+Included by default: `.md`, `.txt`, `.csv`, `.json`, `.jsonl`, `.yaml`,
+`.yml`, `.log`, `.py`, `.sh`, `.toml`, `.ini`, `.cfg`.
 
-## Git State Hub Mode
+Excluded by default: audio files, checkpoints, NumPy arrays, virtual
+environments, `.git`, `wandb`, caches, and `node_modules`.
 
-Git state hub mode exists, but it is not recommended for live generated
-indexes. Git is best for code, specs, and durable decisions. Use SSH, local
-paths, or mounted storage for generated index snapshots and inbox/status JSON.
+## File Split
 
-If you still want to use a separate private state repository for small approved
-state:
+Runtime/install files:
 
-```bash
-git clone https://github.com/<owner>/<private-research-hub-state>.git \
-  .research_hub_state
-research-hub publish --hub .research_hub_state
-research-hub sync-push --hub .research_hub_state
-```
+- `src/research_hub/`
+- `skills/`
+- `templates/`
+- `scripts/`
+- `docs/INSTALL.md`
+- `docs/intake-dispatch.md`
 
-On another machine:
+Development files:
 
-```bash
-git clone https://github.com/<owner>/<private-research-hub-state>.git \
-  .research_hub_state
-research-hub sync-pull --hub .research_hub_state
-research-hub pull-context --hub .research_hub_state
-```
+- `tests/`
+- `docs/dev/`
+- `docs/integrations.md`
+- `docs/oss-reuse.md`
+- `docs/oss-ui-shortlist.md`
 
-## Default indexed files
-
-Included: `.md`, `.txt`, `.csv`, `.json`, `.jsonl`, `.yaml`, `.yml`,
-`.log`, `.py`, `.sh`, `.toml`, `.ini`, `.cfg`.
-
-Excluded: audio files, checkpoints, NumPy arrays, virtual environments,
-`.git`, `wandb`, caches, and `node_modules`.
+See `install/manifest.json`.
 
 ## License
 

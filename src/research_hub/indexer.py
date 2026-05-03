@@ -129,8 +129,11 @@ def build_index(config: IndexConfig) -> None:
                     "sha1": file_hash,
                 }, ensure_ascii=False) + "\n")
     build_sqlite_index(chunks_path, sqlite_path)
+    runs: list[dict[str, Any]] = []
+    claims: list[dict[str, Any]] = []
     if profile:
-        write_profile_outputs(config, profile, document_records)
+        runs, claims = write_profile_outputs(config, profile, document_records)
+    write_manifest(config, document_records, runs, claims)
 
 
 def build_sqlite_index(chunks_path: Path, sqlite_path: Path) -> None:
@@ -165,11 +168,24 @@ def write_profile_outputs(
     config: IndexConfig,
     profile: Any,
     document_records: list[dict[str, Any]],
-) -> None:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     runs = profile.build_runs(document_records)
     claims = profile.build_claims(document_records)
     write_jsonl(config.out_dir / "runs.jsonl", runs)
     write_jsonl(config.out_dir / "claims.jsonl", claims)
+    return runs, claims
+
+
+def write_manifest(
+    config: IndexConfig,
+    document_records: list[dict[str, Any]],
+    runs: list[dict[str, Any]],
+    claims: list[dict[str, Any]],
+) -> None:
+    root_hash = hashlib.sha1()
+    for record in sorted(document_records, key=lambda item: item["source_path"]):
+        root_hash.update(str(record["source_path"]).encode("utf-8"))
+        root_hash.update(str(record["sha1"]).encode("utf-8"))
     manifest = {
         "type": "workspace_index_manifest",
         "workspace_id": config.workspace_id,
@@ -179,6 +195,7 @@ def write_profile_outputs(
         "documents": len(document_records),
         "runs": len(runs),
         "claims": len(claims),
+        "root_hash": root_hash.hexdigest(),
     }
     (config.out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),

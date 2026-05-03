@@ -198,3 +198,56 @@ def build_agent_contexts(
             json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+
+def build_hub_panel(hub_root: Path, panel_dir: Path) -> None:
+    panel_dir.mkdir(parents=True, exist_ok=True)
+    intake_items = read_jsonl(hub_root / "intake" / "items.jsonl")
+    proposals = read_jsonl(hub_root / "dispatch" / "proposals.jsonl")
+    approvals = read_jsonl(hub_root / "dispatch" / "approved.jsonl")
+    parts = [
+        "<!doctype html>",
+        "<html><head><meta charset='utf-8'><title>Research Hub Control Plane</title>",
+        "<style>body{font-family:system-ui,sans-serif;margin:24px;line-height:1.45}"
+        "table{border-collapse:collapse;width:100%;font-size:13px}"
+        "td,th{border:1px solid #ddd;padding:6px;vertical-align:top}"
+        "code{background:#f4f4f4;padding:1px 4px}"
+        ".pill{display:inline-block;border:1px solid #ccc;padding:1px 6px;margin:1px}"
+        "</style></head><body>",
+        "<h1>Research Hub Control Plane</h1>",
+        "<p>Generated hub state. Original workspace files remain authoritative.</p>",
+        "<h2>Intake</h2>",
+        "<table><tr><th>item</th><th>kind</th><th>status</th><th>blob</th></tr>",
+    ]
+    for item in intake_items:
+        parts.append(
+            "<tr>"
+            f"<td>{html.escape(str(item.get('title', '')))}</td>"
+            f"<td>{html.escape(str(item.get('kind', '')))}</td>"
+            f"<td>{html.escape(str(item.get('status', '')))}</td>"
+            f"<td><code>{html.escape(str(item.get('blob_root', '')))}</code></td>"
+            "</tr>"
+        )
+    parts.extend(["</table>", "<h2>Dispatch Proposals</h2>"])
+    for proposal in proposals:
+        parts.append(f"<h3>{html.escape(str(proposal.get('proposal_id', '')))}</h3>")
+        parts.append("<ul>")
+        for target in proposal.get("recommended_targets", []):
+            parts.append(
+                "<li>"
+                f"<strong>{html.escape(str(target.get('workspace_id', '')))}</strong> "
+                f"<span class='pill'>{html.escape(str(target.get('confidence', '')))}</span> "
+                f"{html.escape(str(target.get('reason', '')))}"
+                "</li>"
+            )
+        parts.append("</ul>")
+    parts.append("<h2>Approved Requests</h2><ul>")
+    for approval in approvals:
+        parts.append(
+            "<li>"
+            f"<code>{html.escape(str(approval.get('request_id', '')))}</code> "
+            f"{html.escape(str(approval.get('workspace_id', '')))}"
+            "</li>"
+        )
+    parts.append("</ul></body></html>")
+    (panel_dir / "index.html").write_text("\n".join(parts), encoding="utf-8")

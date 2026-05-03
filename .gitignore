@@ -1,2 +1,11 @@
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.research_hub_local/
+.research_hub_state/
+_research_context/
+snapshots/
+intake/blobs/
+*.sqlite
+*.db
+*.log

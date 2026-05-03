@@ -13,7 +13,8 @@ continue to plan, code, train, evaluate, and publish. Research Hub gives those
 agents a durable map of local evidence, generated summaries, claims, runs, and
 profile-specific context packs.
 
-See `docs/oss-reuse.md` for the current open-source reuse policy. In short:
+See `docs/oss-reuse.md` for the current open-source reuse policy, including
+the UI Component Intake rules. In short:
 `ml-intern` is an architecture reference, while Graphiti-style temporal graph
 memory and LanceDB-style vector search are better treated as optional adapter
 targets rather than core dependencies.

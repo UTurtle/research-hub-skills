@@ -269,3 +269,27 @@ def test_cli_minimal_loop(tmp_path: Path) -> None:
         "workspace_id"
     ] == "B"
     assert (hub / "panel" / "index.html").exists()
+
+
+def test_init_writes_research_hub_workspace_marker(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    hub = tmp_path / "hub"
+
+    main([
+        "init",
+        "--workspace-root",
+        str(workspace),
+        "--hub",
+        str(hub),
+        "--workspace-id",
+        "B",
+    ])
+
+    marker = workspace / "RESEARCH_HUB.md"
+    assert marker.exists()
+    marker_text = marker.read_text(encoding="utf-8")
+    assert "Research Hub Workspace" in marker_text
+    assert str(hub.resolve()) in marker_text
+    assert "Detected workspace id: `B`" in marker_text
+    assert (workspace / "AGENTS.md").exists()
+    assert (workspace / "_research_context" / "START_HERE.md").exists()

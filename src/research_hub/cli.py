@@ -173,7 +173,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     hub_context_dir = hub_root / "contexts" / args.workspace_id
     panel_dir = hub_root / "panel"
     if args.command == "init":
-        run_init(workspace_root, context_dir)
+        run_init(
+            workspace_root,
+            context_dir,
+            hub_root=hub_root,
+            workspace_id=args.workspace_id,
+        )
         return
     if args.command == "publish":
         config = make_index_config(
@@ -355,9 +360,15 @@ def make_index_config(
     )
 
 
-def run_init(workspace_root: Path, context_dir: Path) -> None:
+def run_init(
+    workspace_root: Path,
+    context_dir: Path,
+    hub_root: Path | None = None,
+    workspace_id: str | None = None,
+) -> None:
     workspace_root.mkdir(parents=True, exist_ok=True)
     write_default_context(context_dir)
+    write_research_hub_marker(workspace_root, hub_root, workspace_id)
     agents_path = workspace_root / "AGENTS.md"
     if agents_path.exists():
         return
@@ -369,6 +380,26 @@ def run_init(workspace_root: Path, context_dir: Path) -> None:
             "# Agent Protocol\n\nRead `_research_context/START_HERE.md`.\n",
             encoding="utf-8",
         )
+
+
+def write_research_hub_marker(
+    workspace_root: Path,
+    hub_root: Path | None,
+    workspace_id: str | None,
+) -> None:
+    marker_path = workspace_root / "RESEARCH_HUB.md"
+    if marker_path.exists():
+        return
+    template = Path(__file__).parents[2] / "templates" / "RESEARCH_HUB.md"
+    if template.exists():
+        content = template.read_text(encoding="utf-8")
+    else:
+        content = "# Research Hub Workspace\n"
+    if hub_root is not None:
+        content += f"\nDetected hub path: `{hub_root}`\n"
+    if workspace_id is not None:
+        content += f"\nDetected workspace id: `{workspace_id}`\n"
+    marker_path.write_text(content, encoding="utf-8")
 
 
 if __name__ == "__main__":

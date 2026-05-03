@@ -111,6 +111,15 @@ research-hub collect-index --hub C:\research_hub --workspace-id B --source-conte
 research-hub index-status --hub C:\research_hub
 ```
 
+For SSH-only workspaces, collect the remote `_research_context` directly:
+
+```powershell
+research-hub collect-index-ssh --hub C:\research_hub --workspace-id B --ssh-host linux-b --ssh-user research --remote-context /mnt/ssd/B/_research_context
+```
+
+The first run is a dry run that prints the `scp` plan. Add
+`--execute-transport` after verifying the path.
+
 `collect-index` reads only `manifest.json` first. If the `root_hash` matches the
 latest collected snapshot, it skips copying. If the hash changed, it copies the
 small generated context files into:

@@ -87,7 +87,7 @@ If B/C cannot directly write the NAS path, use SSH transport:
 Windows -> ssh tunnel -> Linux A WebUI
 Linux A -> ssh/scp request JSON -> Linux B/C inbox
 Linux B/C -> publish local index
-Linux A -> collect index snapshot
+Linux A -> collect index snapshot over SSH
 ```
 
 ## What Is Automatic Today?
@@ -96,6 +96,7 @@ Automatic after configuration:
 
 - workspace indexing with `publish`,
 - hub snapshot collection with `collect-index`,
+- SSH snapshot collection command planning with `collect-index-ssh`,
 - intake storage,
 - proposal generation,
 - approval to local_path inbox,
@@ -132,6 +133,37 @@ python -m research_hub.cli collect-index \
   --hub /mnt/nas/research_hub \
   --workspace-id B \
   --source-context /mnt/ssd/B/_research_context
+```
+
+If the workspace is only reachable over SSH, first publish on the remote Linux
+workspace:
+
+```bash
+ssh research@linux-b 'cd /mnt/ssd/B && PYTHONPATH=$PWD/.research-hub-skills/src python -m research_hub.cli publish --workspace-root . --hub .research_hub_local --workspace-id B'
+```
+
+Then collect the generated index from Linux A:
+
+```bash
+python -m research_hub.cli collect-index-ssh \
+  --hub /mnt/nas/research_hub \
+  --workspace-id B \
+  --ssh-host linux-b \
+  --ssh-user research \
+  --remote-context /mnt/ssd/B/_research_context
+```
+
+By default this is a dry run and prints the `scp` commands. Execute the transfer
+only after checking the paths:
+
+```bash
+python -m research_hub.cli collect-index-ssh \
+  --hub /mnt/nas/research_hub \
+  --workspace-id B \
+  --ssh-host linux-b \
+  --ssh-user research \
+  --remote-context /mnt/ssd/B/_research_context \
+  --execute-transport
 ```
 
 Output examples:

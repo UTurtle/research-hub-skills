@@ -13,7 +13,11 @@ from research_hub.context import (
     copy_tree,
     write_default_context,
 )
-from research_hub.collector import collect_index, load_collection_status
+from research_hub.collector import (
+    collect_index,
+    collect_index_ssh,
+    load_collection_status,
+)
 from research_hub.dispatch import approve_proposal, create_dispatch_proposal
 from research_hub.git_sync import sync_pull, sync_push
 from research_hub.indexer import (
@@ -132,6 +136,25 @@ def main(argv: Sequence[str] | None = None) -> None:
         state = "copied" if result.get("changed") else "skipped"
         copied_count = len(result.get("copied_files", []))
         print(f"{state}\t{copied_count} files\t{result['target_dir']}")
+        return
+    if args.command == "collect-index-ssh":
+        result = collect_index_ssh(
+            hub_root=Path(args.hub).resolve(),
+            workspace_id=args.workspace_id,
+            ssh_host=args.ssh_host,
+            ssh_user=args.ssh_user,
+            remote_context=args.remote_context,
+            force=args.force,
+            execute=args.execute_transport,
+        )
+        if result.get("dry_run"):
+            print(f"dry-run\t{result['target_dir']}")
+            for command in result.get("commands", []):
+                print(" ".join(command))
+        else:
+            state = "copied" if result.get("changed") else "skipped"
+            copied_count = len(result.get("copied_files", []))
+            print(f"{state}\t{copied_count} files\t{result['target_dir']}")
         return
     if args.command == "index-status":
         status = load_collection_status(Path(args.hub).resolve())
@@ -295,6 +318,17 @@ def add_collect_parsers(subparsers: argparse._SubParsersAction) -> None:
     collect.add_argument("--workspace-id", required=True)
     collect.add_argument("--source-context", required=True)
     collect.add_argument("--force", action="store_true")
+    collect_ssh = subparsers.add_parser("collect-index-ssh")
+    collect_ssh.add_argument(
+        "--hub",
+        default=os.environ.get("RESEARCH_HUB", ".research_hub_local"),
+    )
+    collect_ssh.add_argument("--workspace-id", required=True)
+    collect_ssh.add_argument("--ssh-host", required=True)
+    collect_ssh.add_argument("--ssh-user", default="")
+    collect_ssh.add_argument("--remote-context", required=True)
+    collect_ssh.add_argument("--force", action="store_true")
+    collect_ssh.add_argument("--execute-transport", action="store_true")
     status = subparsers.add_parser("index-status")
     status.add_argument(
         "--hub",

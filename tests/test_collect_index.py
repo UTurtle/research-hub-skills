@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 
 from research_hub.cli import main
-from research_hub.collector import collect_index, load_collection_status
+from research_hub.collector import (
+    collect_index,
+    collect_index_ssh,
+    load_collection_status,
+)
 
 
 def write_context(path: Path, root_hash: str = "abc123") -> None:
@@ -63,3 +67,42 @@ def test_collect_index_cli_status(tmp_path: Path, capsys) -> None:
     assert "copied\t3 files" in output
     assert "B\t2 docs" in output
     assert "def456" in output
+
+
+def test_collect_index_ssh_dry_run_plans_scp_commands(tmp_path: Path) -> None:
+    result = collect_index_ssh(
+        hub_root=tmp_path / "hub",
+        workspace_id="B",
+        ssh_host="linux-b",
+        ssh_user="research",
+        remote_context="/mnt/ssd/B/_research_context",
+    )
+
+    assert result["dry_run"] is True
+    assert result["transport"] == "ssh"
+    assert result["commands"][0] == [
+        "scp",
+        "research@linux-b:/mnt/ssd/B/_research_context/manifest.json",
+        "<temp-context>/manifest.json",
+    ]
+    assert any("document_chunks.jsonl" in command[1] for command in result["commands"])
+
+
+def test_collect_index_ssh_cli_dry_run(tmp_path: Path, capsys) -> None:
+    main([
+        "collect-index-ssh",
+        "--hub",
+        str(tmp_path / "hub"),
+        "--workspace-id",
+        "B",
+        "--ssh-host",
+        "linux-b",
+        "--ssh-user",
+        "research",
+        "--remote-context",
+        "/mnt/ssd/B/_research_context",
+    ])
+
+    output = capsys.readouterr().out
+    assert "dry-run" in output
+    assert "research@linux-b:/mnt/ssd/B/_research_context/manifest.json" in output

@@ -87,17 +87,26 @@ memory backends.
 ## One-command workspace install
 
 ```bash
-git clone https://github.com/UTurtle/research-hub-skills.git \
-  .research-hub-skills
-bash .research-hub-skills/scripts/install_workspace.sh
+curl -fsSL https://raw.githubusercontent.com/UTurtle/research-hub-skills/main/install.sh | bash
+```
+
+Without `curl`, use Git directly:
+
+```bash
+git clone https://github.com/UTurtle/research-hub-skills.git .research-hub-skills
+bash .research-hub-skills/scripts/install_codex_skills.sh
 codex
 ```
 
-For a distributed setup, set `RESEARCH_HUB` to the mounted hub/NAS path before
-publishing:
+The installed `research-hub-install` skill tells Codex to ask for the hub/NAS
+path and workspace id before running the workspace installer.
+
+For a prompt-free distributed setup, set `RESEARCH_HUB` to the mounted hub/NAS
+path and `RESEARCH_WORKSPACE_ID` to the workspace name before installing:
 
 ```bash
 export RESEARCH_HUB="/mnt/nas/research_hub"
+export RESEARCH_WORKSPACE_ID="$(basename "$PWD")"
 bash .research-hub-skills/scripts/install_workspace.sh
 ```
 

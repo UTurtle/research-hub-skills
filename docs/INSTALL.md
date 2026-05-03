@@ -30,6 +30,23 @@ Linux B/C
 
 ## Minimal Install
 
+Bootstrap the repo and install Codex skills:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/UTurtle/research-hub-skills/main/install.sh | bash
+```
+
+Without `curl`, use Git directly:
+
+```bash
+git clone https://github.com/UTurtle/research-hub-skills.git .research-hub-skills
+bash .research-hub-skills/scripts/install_codex_skills.sh
+```
+
+After this, Codex can use the `research-hub-install` skill. The skill should
+ask for the hub/NAS path and workspace id, then run the existing workspace
+installer.
+
 On each Linux research workspace:
 
 ```bash
@@ -96,7 +113,7 @@ Automatic after configuration:
 
 - workspace indexing with `publish`,
 - hub snapshot collection with `collect-index`,
-- SSH snapshot collection command planning with `collect-index-ssh`,
+- SSH snapshot collection with `collect-index-ssh` dry-run and execute modes,
 - intake storage,
 - proposal generation,
 - approval to local_path inbox,
@@ -107,7 +124,7 @@ Automatic after configuration:
 Not automatic yet:
 
 - continuous daemon/watch mode,
-- SSH pull of remote index snapshots,
+- scheduled SSH pull/watch automation,
 - local agent status return flow,
 - remote SSH end-to-end validation on real Linux hosts,
 - smarter semantic proposal ranking.

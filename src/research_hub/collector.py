@@ -15,6 +15,7 @@ COLLECTED_FILES = (
     "manifest.json",
     "documents.jsonl",
     "document_chunks.jsonl",
+    "large_files.jsonl",
     "claims.jsonl",
     "runs.jsonl",
     "source_links.jsonl",

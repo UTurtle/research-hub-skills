@@ -19,11 +19,17 @@ DEFAULT_INCLUDE_EXTENSIONS = {
 DEFAULT_EXCLUDE_DIRS = {
     ".git", ".venv", "venv", "__pycache__", "wandb", "node_modules",
     ".mypy_cache", ".pytest_cache", "_research_context",
+    "artifacts", "outputs", "data", "datasets", "logs", "checkpoints", "ckpts",
 }
 DEFAULT_EXCLUDE_EXTENSIONS = {
     ".wav", ".flac", ".mp3", ".pt", ".pth", ".ckpt", ".pkl",
     ".npy", ".npz",
 }
+LARGE_FILE_METADATA_PRUNE_DIRS = {
+    ".git", ".venv", "venv", "__pycache__", "node_modules",
+    ".mypy_cache", ".pytest_cache", "_research_context",
+}
+ALWAYS_INDEX_EXTENSIONS = {".md"}
 
 
 @dataclass(frozen=True)
@@ -35,6 +41,7 @@ class IndexConfig:
     include_extensions: set[str]
     exclude_dirs: set[str]
     exclude_extensions: set[str]
+    max_file_bytes: int | None = None
     profile: str = "generic"
 
 
@@ -66,7 +73,51 @@ def iter_indexable_files(config: IndexConfig) -> Iterable[Path]:
                 continue
             if suffix not in config.include_extensions:
                 continue
+            if (
+                config.max_file_bytes is not None
+                and suffix not in ALWAYS_INDEX_EXTENSIONS
+            ):
+                try:
+                    if path.stat().st_size > config.max_file_bytes:
+                        continue
+                except OSError:
+                    continue
             yield path
+
+
+def iter_large_file_records(config: IndexConfig) -> Iterable[dict[str, Any]]:
+    if config.max_file_bytes is None:
+        return
+    for dirpath, dirnames, filenames in os.walk(config.workspace_root):
+        dirnames[:] = [
+            name for name in dirnames if name not in LARGE_FILE_METADATA_PRUNE_DIRS
+        ]
+        current = Path(dirpath)
+        for filename in filenames:
+            path = current / filename
+            suffix = path.suffix.lower()
+            if suffix in config.exclude_extensions:
+                continue
+            if suffix not in config.include_extensions:
+                continue
+            if suffix in ALWAYS_INDEX_EXTENSIONS:
+                continue
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            if stat.st_size <= config.max_file_bytes:
+                continue
+            yield {
+                "workspace_id": config.workspace_id,
+                "host_id": config.host_id,
+                "source_path": path.relative_to(config.workspace_root).as_posix(),
+                "mtime": stat.st_mtime,
+                "size": stat.st_size,
+                "suffix": suffix,
+                "omitted_reason": "file_exceeds_RESEARCH_HUB_MAX_FILE_BYTES",
+                "max_file_bytes": config.max_file_bytes,
+            }
 
 
 def split_chunks(text: str, max_chars: int = 3000) -> list[str]:
@@ -91,9 +142,11 @@ def build_index(config: IndexConfig) -> None:
     config.out_dir.mkdir(parents=True, exist_ok=True)
     chunks_path = config.out_dir / "document_chunks.jsonl"
     docs_path = config.out_dir / "documents.jsonl"
+    large_files_path = config.out_dir / "large_files.jsonl"
     sqlite_path = config.out_dir / "search_index.sqlite"
     profile = load_profile(config.profile)
     document_records: list[dict[str, Any]] = []
+    large_file_records = list(iter_large_file_records(config))
     with docs_path.open("w", encoding="utf-8") as docs_file, (
         chunks_path.open("w", encoding="utf-8")
     ) as chunks_file:
@@ -128,12 +181,13 @@ def build_index(config: IndexConfig) -> None:
                     "text": chunk,
                     "sha1": file_hash,
                 }, ensure_ascii=False) + "\n")
+    write_jsonl(large_files_path, large_file_records)
     build_sqlite_index(chunks_path, sqlite_path)
     runs: list[dict[str, Any]] = []
     claims: list[dict[str, Any]] = []
     if profile:
         runs, claims = write_profile_outputs(config, profile, document_records)
-    write_manifest(config, document_records, runs, claims)
+    write_manifest(config, document_records, runs, claims, large_file_records)
 
 
 def build_sqlite_index(chunks_path: Path, sqlite_path: Path) -> None:
@@ -181,11 +235,16 @@ def write_manifest(
     document_records: list[dict[str, Any]],
     runs: list[dict[str, Any]],
     claims: list[dict[str, Any]],
+    large_file_records: list[dict[str, Any]],
 ) -> None:
     root_hash = hashlib.sha1()
     for record in sorted(document_records, key=lambda item: item["source_path"]):
         root_hash.update(str(record["source_path"]).encode("utf-8"))
         root_hash.update(str(record["sha1"]).encode("utf-8"))
+    for record in sorted(large_file_records, key=lambda item: item["source_path"]):
+        root_hash.update(str(record["source_path"]).encode("utf-8"))
+        root_hash.update(str(record["size"]).encode("utf-8"))
+        root_hash.update(str(record["mtime"]).encode("utf-8"))
     manifest = {
         "type": "workspace_index_manifest",
         "workspace_id": config.workspace_id,
@@ -193,6 +252,7 @@ def write_manifest(
         "profile": config.profile,
         "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "documents": len(document_records),
+        "large_files_omitted": len(large_file_records),
         "runs": len(runs),
         "claims": len(claims),
         "root_hash": root_hash.hexdigest(),

@@ -9,20 +9,21 @@ WORKSPACE_ID="${RESEARCH_WORKSPACE_ID:-$(basename "${WORKSPACE_ROOT}")}"
 HOST_ID="${RESEARCH_HOST_ID:-local}"
 
 export PYTHONPATH="${REPO_ROOT}/src:${PYTHONPATH:-}"
+PYTHON_BIN="${PYTHON:-python3}"
 
-python -m research_hub.cli init \
+"${PYTHON_BIN}" -m research_hub.cli init \
   --workspace-root "${WORKSPACE_ROOT}" \
   --hub "${HUB_ROOT}" \
   --workspace-id "${WORKSPACE_ID}" \
   --host-id "${HOST_ID}"
 
-python -m research_hub.cli publish \
+"${PYTHON_BIN}" -m research_hub.cli publish \
   --workspace-root "${WORKSPACE_ROOT}" \
   --hub "${HUB_ROOT}" \
   --workspace-id "${WORKSPACE_ID}" \
   --host-id "${HOST_ID}"
 
-python -m research_hub.cli pull-context \
+"${PYTHON_BIN}" -m research_hub.cli pull-context \
   --workspace-root "${WORKSPACE_ROOT}" \
   --hub "${HUB_ROOT}" \
   --workspace-id "${WORKSPACE_ID}" \

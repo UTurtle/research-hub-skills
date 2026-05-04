@@ -70,6 +70,50 @@ def test_collect_index_cli_status(tmp_path: Path, capsys) -> None:
     assert "def456" in output
 
 
+def test_publish_records_large_files_without_chunking_body(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    hub = tmp_path / "hub"
+    workspace = tmp_path / "workspace"
+    logs = workspace / "logs"
+    references = workspace / "references"
+    logs.mkdir(parents=True)
+    references.mkdir()
+    (workspace / "note.md").write_text("small note", encoding="utf-8")
+    (references / "paper.md").write_text("paper note " * 20, encoding="utf-8")
+    (logs / "train.log").write_text("x" * 100, encoding="utf-8")
+    monkeypatch.setenv("RESEARCH_HUB_MAX_FILE_BYTES", "20")
+
+    main([
+        "publish",
+        "--hub",
+        str(hub),
+        "--workspace-root",
+        str(workspace),
+        "--workspace-id",
+        "B",
+    ])
+
+    context = hub / "contexts" / "B"
+    manifest = json.loads((context / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["documents"] == 2
+    assert manifest["large_files_omitted"] == 1
+    chunks = (context / "document_chunks.jsonl").read_text(encoding="utf-8")
+    assert "note.md" in chunks
+    assert "references/paper.md" in chunks
+    assert "paper note" in chunks
+    assert "logs/train.log" not in chunks
+    large_files = [
+        json.loads(line)
+        for line in (context / "large_files.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    assert large_files[0]["source_path"] == "logs/train.log"
+    assert large_files[0]["omitted_reason"] == "file_exceeds_RESEARCH_HUB_MAX_FILE_BYTES"
+
+
 def test_collect_index_ssh_dry_run_plans_scp_commands(tmp_path: Path) -> None:
     result = collect_index_ssh(
         hub_root=tmp_path / "hub",

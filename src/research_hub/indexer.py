@@ -19,9 +19,7 @@ DEFAULT_INCLUDE_EXTENSIONS = {
 DEFAULT_EXCLUDE_DIRS = {
     ".git", ".venv", "venv", "__pycache__", "wandb", "node_modules",
     ".mypy_cache", ".pytest_cache", "_research_context",
-    "artifacts", "outputs", "workspace", "references", "data", "datasets",
-    "logs", "checkpoints", "ckpts",
-    "beats_with_amm_attribute_baseline",
+    "artifacts", "outputs", "data", "datasets", "logs", "checkpoints", "ckpts",
 }
 DEFAULT_EXCLUDE_EXTENSIONS = {
     ".wav", ".flac", ".mp3", ".pt", ".pth", ".ckpt", ".pkl",

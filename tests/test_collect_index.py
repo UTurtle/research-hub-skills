@@ -81,7 +81,7 @@ def test_publish_records_large_files_without_chunking_body(
     logs.mkdir(parents=True)
     references.mkdir()
     (workspace / "note.md").write_text("small note", encoding="utf-8")
-    (references / "paper.md").write_text("paper note", encoding="utf-8")
+    (references / "paper.md").write_text("paper note " * 20, encoding="utf-8")
     (logs / "train.log").write_text("x" * 100, encoding="utf-8")
     monkeypatch.setenv("RESEARCH_HUB_MAX_FILE_BYTES", "20")
 
@@ -102,6 +102,7 @@ def test_publish_records_large_files_without_chunking_body(
     chunks = (context / "document_chunks.jsonl").read_text(encoding="utf-8")
     assert "note.md" in chunks
     assert "references/paper.md" in chunks
+    assert "paper note" in chunks
     assert "logs/train.log" not in chunks
     large_files = [
         json.loads(line)

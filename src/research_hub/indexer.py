@@ -29,6 +29,7 @@ LARGE_FILE_METADATA_PRUNE_DIRS = {
     ".git", ".venv", "venv", "__pycache__", "node_modules",
     ".mypy_cache", ".pytest_cache", "_research_context",
 }
+ALWAYS_INDEX_EXTENSIONS = {".md"}
 
 
 @dataclass(frozen=True)
@@ -72,7 +73,10 @@ def iter_indexable_files(config: IndexConfig) -> Iterable[Path]:
                 continue
             if suffix not in config.include_extensions:
                 continue
-            if config.max_file_bytes is not None:
+            if (
+                config.max_file_bytes is not None
+                and suffix not in ALWAYS_INDEX_EXTENSIONS
+            ):
                 try:
                     if path.stat().st_size > config.max_file_bytes:
                         continue
@@ -95,6 +99,8 @@ def iter_large_file_records(config: IndexConfig) -> Iterable[dict[str, Any]]:
             if suffix in config.exclude_extensions:
                 continue
             if suffix not in config.include_extensions:
+                continue
+            if suffix in ALWAYS_INDEX_EXTENSIONS:
                 continue
             try:
                 stat = path.stat()

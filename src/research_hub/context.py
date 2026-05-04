@@ -44,6 +44,7 @@ def copy_index_to_context(index_dir: Path, context_dir: Path) -> None:
     for filename in (
         "document_chunks.jsonl",
         "documents.jsonl",
+        "large_files.jsonl",
         "runs.jsonl",
         "claims.jsonl",
         "manifest.json",

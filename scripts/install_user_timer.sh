@@ -8,6 +8,7 @@ HUB_ROOT="${RESEARCH_HUB:-${WORKSPACE_ROOT}/.research_hub_local}"
 WORKSPACE_ID="${RESEARCH_WORKSPACE_ID:-$(basename "${WORKSPACE_ROOT}")}"
 HOST_ID="${RESEARCH_HOST_ID:-local}"
 PROFILE="${RESEARCH_PROFILE:-generic}"
+PYTHON_BIN="${PYTHON:-python3}"
 INTERVAL="${RESEARCH_HUB_TIMER_INTERVAL:-daily}"
 UNIT_SAFE="$(printf "%s" "${WORKSPACE_ID}" | tr -c 'A-Za-z0-9_' '-')"
 SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
@@ -28,7 +29,7 @@ Environment=RESEARCH_HUB=${HUB_ROOT}
 Environment=RESEARCH_WORKSPACE_ID=${WORKSPACE_ID}
 Environment=RESEARCH_HOST_ID=${HOST_ID}
 Environment=RESEARCH_PROFILE=${PROFILE}
-ExecStart=python -m research_hub.cli publish --workspace-root ${WORKSPACE_ROOT} --hub ${HUB_ROOT} --workspace-id ${WORKSPACE_ID} --host-id ${HOST_ID} --profile ${PROFILE}
+ExecStart=${PYTHON_BIN} -m research_hub.cli publish --workspace-root ${WORKSPACE_ROOT} --hub ${HUB_ROOT} --workspace-id ${WORKSPACE_ID} --host-id ${HOST_ID} --profile ${PROFILE}
 EOF
 
 cat > "${SYSTEMD_USER_DIR}/${TIMER_NAME}" <<EOF

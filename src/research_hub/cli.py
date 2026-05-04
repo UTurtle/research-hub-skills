@@ -397,6 +397,12 @@ def make_index_config(
     index_dir: Path,
     profile: str,
 ) -> IndexConfig:
+    max_file_bytes_env = os.environ.get("RESEARCH_HUB_MAX_FILE_BYTES", "200000")
+    max_file_bytes = (
+        None
+        if max_file_bytes_env.lower() in {"", "none", "0"}
+        else int(max_file_bytes_env)
+    )
     return IndexConfig(
         workspace_root=workspace_root,
         workspace_id=workspace_id,
@@ -405,6 +411,7 @@ def make_index_config(
         include_extensions=set(DEFAULT_INCLUDE_EXTENSIONS),
         exclude_dirs=set(DEFAULT_EXCLUDE_DIRS),
         exclude_extensions=set(DEFAULT_EXCLUDE_EXTENSIONS),
+        max_file_bytes=max_file_bytes,
         profile=profile,
     )
 
